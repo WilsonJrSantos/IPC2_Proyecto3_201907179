@@ -1,0 +1,46 @@
+<configuracion>
+    <listaRecursos>
+        <recurso id="1">
+            <nombre>Servidor</nombre>
+            <abreviatura>SRV</abreviatura>
+            <metrica>GB</metrica>
+            <tipo>Infraestructura</tipo>
+            <valorXhora>5.0</valorXhora>
+        </recurso>
+    </listaRecursos>
+
+    <listaCategorias>
+        <categoria id="1">
+            <nombre>Pequeña</nombre>
+            <descripcion>Configuración básica</descripcion>
+            <cargaTrabajo>Ligera</cargaTrabajo>
+            <listaConfiguraciones>
+                <configuracion id="101">
+                    <nombre>Config A</nombre>
+                    <descripcion>Servidor básico</descripcion>
+                    <recursosConfiguracion>
+                        <recurso id="1">2</recurso>
+                    </recursosConfiguracion>
+                </configuracion>
+            </listaConfiguraciones>
+        </categoria>
+    </listaCategorias>
+
+    <listaClientes>
+        <cliente nit="1234567">
+            <nombre>Juan Pérez</nombre>
+            <usuario>juan</usuario>
+            <clave>1234</clave>
+            <direccion>Calle 10</direccion>
+            <correoElectronico>juan@example.com</correoElectronico>
+            <listaInstancias>
+                <instancia id="1">
+                    <idConfiguracion>101</idConfiguracion>
+                    <nombre>MiServidor</nombre>
+                    <fechaInicio>2025-10-15</fechaInicio>
+                    <estado>Activa</estado>
+                </instancia>
+            </listaInstancias>
+        </cliente>
+    </listaClientes>
+</configuracion>
