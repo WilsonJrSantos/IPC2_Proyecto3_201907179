@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as ET
 from models import Recurso, Categoria, Configuracion, RecursoConfiguracion, Cliente, Instancia
 from utils import extraer_fecha, validar_nit
+from utils import extraer_fecha, validar_nit
 
 class Datalake:
     def __init__(self):
@@ -93,6 +94,36 @@ class Datalake:
             "categorias": [cat.__dict__ for cat in self.categorias],
             "clientes": [cli.__dict__ for cli in self.clientes]
         }
-        
+
+def cargar_consumo_desde_xml_string(self, xml_string):
+        """ Parsea el XML de consumo y lo registra en la instancia correspondiente. """
+        try:
+            root = ET.fromstring(xml_string)
+            consumos_procesados = 0
+            
+            for consumo_elem in root.findall('.//consumo'):
+                nit_cliente = consumo_elem.attrib['nitCliente']
+                id_instancia = int(consumo_elem.attrib['idInstancia'])
+                tiempo = float(consumo_elem.find('tiempo').text)
+                
+                # Buscar el cliente y la instancia
+                cliente_encontrado = next((c for c in self.clientes if c.nit == nit_cliente), None)
+                if not cliente_encontrado:
+                    print(f"Advertencia: Cliente con NIT {nit_cliente} no encontrado.")
+                    continue
+
+                instancia_encontrada = next((i for i in cliente_encontrado.instancias if i.id == id_instancia), None)
+                if not instancia_encontrada:
+                    print(f"Advertencia: Instancia con ID {id_instancia} no encontrada para el cliente {nit_cliente}.")
+                    continue
+                
+                # Añadir el consumo a la lista de la instancia
+                instancia_encontrada.consumos.append(tiempo)
+                consumos_procesados += 1
+            
+            return {"status": "success", "message": f"{consumos_procesados} consumos procesados."}
+        except Exception as e:
+            return {"status": "error", "message": f"Error al procesar el XML de consumo: {e}"}
+           
 # Instancia global para actuar como nuestra base de datos en memoria
 datalake = Datalake()
