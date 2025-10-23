@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tecnologías Chapinas - Admin</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .card { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 8px; }
+        pre { background-color: #f4f4f4; padding: 1em; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+
+    <div class="card">
+        <h2>Cargar Archivo de Configuración (.xml)</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="config_file" required>
+            <button type="submit">Enviar Configuración</button>
+        </form>
+        {% if config_message %}<p><strong>Respuesta:</strong> {{ config_message }}</p>{% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Cargar Archivo de Consumo (.xml)</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="consumo_file" required>
+            <button type="submit">Enviar Consumo</button>
+        </form>
+        {% if consumo_message %}<p><strong>Respuesta:</strong> {{ consumo_message }}</p>{% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Datos Actuales del Sistema</h2>
+        {% if datos %}
+            <pre>{{ datos | safe }}</pre>
+        {% elif datos_error %}
+            <p style="color: red;">{{ datos_error }}</p>
+        {% else %}
+            <p>No hay datos para mostrar.</p>
+        {% endif %}
+    </div>
+
+    <hr>
+    <a href="{% url 'reset_data' %}">Operaciones del Sistema (Resetear)</a>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archivoConfiguraciones>
+    <listaRecursos>
+        <recurso id="1">
+            <nombre>Memoria de Acceso Aleatorio</nombre>
+            <abreviatura>RAM</abreviatura>
+            <metrica>Gb</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>40</valorXhora>
+        </recurso>
+        <recurso id="2">
+            <nombre>Unidad Central de Procesamiento</nombre>
+            <abreviatura>CPU</abreviatura>
+            <metrica>Núcleos</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>50</valorXhora>
+        </recurso>
+        <recurso id="3">
+            <nombre>Disco Duro Sólido</nombre>
+            <abreviatura>SSD</abreviatura>
+            <metrica>Gb</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>30</valorXhora>
+        </recurso>
+    </listaRecursos>
+
+    <listaCategorias>
+        <categoria id="1">
+            <nombre>Categoria 1</nombre>
+            <descripcion>Configuraciones de alta carga</descripcion>
+            <cargaTrabajo>Alta</cargaTrabajo>
+            <listaConfiguraciones>
+                <configuracion id="1">
+                    <nombre>C1C1</nombre>
+                    <descripcion>Configuración alta</descripcion>
+                    <recursosConfiguracion>
+                        <recurso id="1">16</recurso>
+                        <recurso id="2">8</recurso>
+                    </recursosConfiguracion>
+                </configuracion>
+                <configuracion id="2">
+                    <nombre>C1C2</nombre>
+                    <descripcion>Configuración baja</descripcion>
+                    <recursosConfiguracion>
+                        <recurso id="2">2</recurso>
+                        <recurso id="3">50</recurso>
+                    </recursosConfiguracion>
+                </configuracion>
+            </listaConfiguraciones>
+        </categoria>
+    </listaCategorias>
+
+    <listaClientes>
+        <cliente nit="32644-5">
+            <nombre>ipc</nombre>
+            <usuario>prueba</usuario>
+            <clave>proyecto</clave>
+            <direccion>Direccion del cliente</direccion>
+            <correoElectronico>eMailCliente</correoElectronico>
+            <listaInstancias>
+                <instancia id="1">
+                    <idConfiguracion>1</idConfiguracion>
+                    <nombre>Instancia Uno</nombre>
+                    <fechaInicio>esta es una descripcion de la fecha 26/02/2009</fechaInicio>
+                    <estado>CANCELADA</estado>
+                    <fechaFinal>27/06/2009</fechaFinal>
+                </instancia>
+                <instancia id="2">
+                    <idConfiguracion>2</idConfiguracion>
+                    <nombre>Instancia Dos</nombre>
+                    <fechaInicio>26/02/2003 la fecha esta al inicio</fechaInicio>
+                    <estado>VIGENTE</estado>
+                    <fechaFinal>27/06/2009</fechaFinal>
+                </instancia>
+            </listaInstancias>
+        </cliente>
+    </listaClientes>
+</archivoConfiguraciones>  

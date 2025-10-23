@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from database import datalake # Importamos la instancia única
+from utils import validar_nit # Importado para Release 2
+# Se eliminaron 'reportlab.pdfgen' y 'django.http' por no usarse en Release 3
 
 app = Flask(__name__)
 
@@ -32,6 +34,8 @@ def consultar_datos():
     datos = datalake.get_datos_generales()
     return jsonify(datos)
 
+# --- Endpoints de Release 2 ---
+
 @app.route('/cargar-consumo', methods=['POST'])
 def cargar_consumo():
     """ Endpoint para recibir y procesar el XML de consumo. """
@@ -49,10 +53,10 @@ def cargar_consumo():
             return jsonify(resultado), 500
         return jsonify(resultado), 200
 
-# Endpoint para crear un nuevo cliente (ejemplo de endpoint de creación)
 @app.route('/crear-cliente', methods=['POST'])
 def crear_cliente():
-    from models import Cliente
+    """ Endpoint para crear un nuevo cliente (ejemplo de endpoint de creación). """
+    from models import Cliente # Importación local como en el ejemplo
     data = request.json
     
     if not all(k in data for k in ['nit', 'nombre', 'usuario', 'clave', 'direccion', 'correo']):
@@ -76,10 +80,11 @@ def crear_cliente():
     
     return jsonify({"status": "success", "message": "Cliente creado exitosamente."}), 201
 
-
 # NOTA: De manera similar, se crearían los endpoints /crearRecurso, /crearCategoria, etc.
 # Por brevedad, solo se implementa /crear-cliente como ejemplo.
 
+# El endpoint /generar-factura se quitó para volver al Release 3.
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+

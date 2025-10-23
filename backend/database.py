@@ -1,7 +1,6 @@
 from xml.etree import ElementTree as ET
 from models import Recurso, Categoria, Configuracion, RecursoConfiguracion, Cliente, Instancia
 from utils import extraer_fecha, validar_nit
-from utils import extraer_fecha, validar_nit
 
 class Datalake:
     def __init__(self):
@@ -81,22 +80,8 @@ class Datalake:
         except Exception as e:
             return {"status": "error", "message": f"Error al procesar el XML: {e}"}
 
-    def reset_datos(self):
-        """ Limpia todos los datos en memoria. """
-        self.recursos.clear()
-        self.categorias.clear()
-        self.clientes.clear()
-
-    def get_datos_generales(self):
-        """ Devuelve un resumen de todos los datos cargados. """
-        return {
-            "recursos": [rec.__dict__ for rec in self.recursos],
-            "categorias": [cat.__dict__ for cat in self.categorias],
-            "clientes": [cli.__dict__ for cli in self.clientes]
-        }
-
-def cargar_consumo_desde_xml_string(self, xml_string):
-        """ Parsea el XML de consumo y lo registra en la instancia correspondiente. """
+    def cargar_consumo_desde_xml_string(self, xml_string):
+        """ Parsea el XML de consumo y lo registra en la instancia correspondiente. (Release 2) """
         try:
             root = ET.fromstring(xml_string)
             consumos_procesados = 0
@@ -124,6 +109,21 @@ def cargar_consumo_desde_xml_string(self, xml_string):
             return {"status": "success", "message": f"{consumos_procesados} consumos procesados."}
         except Exception as e:
             return {"status": "error", "message": f"Error al procesar el XML de consumo: {e}"}
-           
+
+    def reset_datos(self):
+        """ Limpia todos los datos en memoria. """
+        self.recursos.clear()
+        self.categorias.clear()
+        self.clientes.clear()
+
+    def get_datos_generales(self):
+        """ Devuelve un resumen de todos los datos cargados. """
+        return {
+            "recursos": [rec.__dict__ for rec in self.recursos],
+            "categorias": [cat.__dict__ for cat in self.categorias],
+            "clientes": [cli.__dict__ for cli in self.clientes]
+        }
+
 # Instancia global para actuar como nuestra base de datos en memoria
 datalake = Datalake()
+
