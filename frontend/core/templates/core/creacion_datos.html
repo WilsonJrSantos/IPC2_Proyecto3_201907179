@@ -1,0 +1,272 @@
+{% extends "core/base.html" %}
+
+{% block title %}Creación de Datos - {{ block.super }}{% endblock %}
+
+{% block header_title %}
+    Creación de Nuevos Datos
+{% endblock %}
+
+{% block content %}
+
+    <!-- Mensaje de feedback -->
+    {% if message %}
+        <div class="message {{ message.1 }}">
+            <strong>Respuesta:</strong> {{ message.0 }}
+        </div>
+    {% endif %}
+
+    <!-- Contenedor de formularios en dos columnas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Columna 1 -->
+        <div>
+            <!-- Formulario Crear Cliente -->
+            <div class="card">
+                <div class="card-header"><h2>Crear Nuevo Cliente</h2></div>
+                <form method="post" class="card-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="crear_cliente">
+                    <div class="form-grid">
+                        <div class="form-group"><label for="nit">NIT</label><input type="text" name="nit" id="nit" class="form-control" required></div>
+                        <div class="form-group"><label for="nombre">Nombre Completo</label><input type="text" name="nombre" id="nombre" class="form-control" required></div>
+                        <div class="form-group"><label for="usuario">Usuario</label><input type="text" name="usuario" id="usuario" class="form-control" required></div>
+                        <div class="form-group"><label for="clave">Clave</label><input type="password" name="clave" id="clave" class="form-control" required></div>
+                    </div>
+                    <div class="form-group mt-4"><label for="direccion">Dirección</label><input type="text" name="direccion" id="direccion" class="form-control" required></div>
+                    <div class="form-group"><label for="correo">Correo Electrónico</label><input type="email" name="correo" id="correo" class="form-control" required></div>
+                    <button type="submit" class="btn mt-2">Crear Cliente</button>
+                </form>
+            </div>
+
+            <!-- Formulario Crear Recurso -->
+            <div class="card">
+                <div class="card-header"><h2>Crear Nuevo Recurso</h2></div>
+                <form method="post" class="card-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="crear_recurso">
+                    <div class="form-grid">
+                        <div class="form-group"><label for="id_rec">ID (Número)</label><input type="number" name="id" id="id_rec" class="form-control" required></div>
+                        <div class="form-group"><label for="nombre_rec">Nombre del Recurso</label><input type="text" name="nombre" id="nombre_rec" class="form-control" required></div>
+                        <div class="form-group"><label for="abreviatura_rec">Abreviatura</label><input type="text" name="abreviatura" id="abreviatura_rec" class="form-control" required></div>
+                        <div class="form-group"><label for="metrica_rec">Métrica (Ej: Gb, Núcleos)</label><input type="text" name="metrica" id="metrica_rec" class="form-control" required></div>
+                        <div class="form-group"><label for="tipo_rec">Tipo</label><select name="tipo" id="tipo_rec" class="form-control" required><option value="HARDWARE">Hardware</option><option value="SOFTWARE">Software</option></select></div>
+                        <div class="form-group"><label for="valor_x_hora_rec">Valor por Hora (Q)</label><input type="number" name="valor_x_hora" id="valor_x_hora_rec" class="form-control" step="0.01" required></div>
+                    </div>
+                    <button type="submit" class="btn mt-2">Crear Recurso</button>
+                </form>
+            </div>
+
+            <!-- Formulario Crear Categoría -->
+            <div class="card">
+                 <div class="card-header"><h2>Crear Nueva Categoría</h2></div>
+                 <form method="post" class="card-content">
+                     {% csrf_token %}
+                     <input type="hidden" name="form_type" value="crear_categoria">
+                     <div class="form-grid">
+                         <div class="form-group"><label for="id_cat">ID Nueva Categoría</label><input type="number" name="id" id="id_cat" class="form-control" required></div>
+                         <div class="form-group"><label for="nombre_cat">Nombre Categoría</label><input type="text" name="nombre" id="nombre_cat" class="form-control" required></div>
+                     </div>
+                     <div class="form-group mt-4"><label for="carga_trabajo_cat">Carga de Trabajo (Ej: Alta, Media)</label><input type="text" name="carga_trabajo" id="carga_trabajo_cat" class="form-control" required></div>
+                     <div class="form-group"><label for="descripcion_cat">Descripción</label><input type="text" name="descripcion" id="descripcion_cat" class="form-control" required></div>
+                     <button type="submit" class="btn mt-2">Crear Categoría</button>
+                 </form>
+            </div>
+        </div>
+
+        <!-- Columna 2 -->
+        <div>
+            <!-- Formulario Crear Configuración -->
+            <div class="card">
+                <div class="card-header"><h2>Crear Nueva Configuración</h2></div>
+                <form method="post" class="card-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="crear_configuracion">
+                    
+                    <div class="form-group">
+                        <label for="id_categoria_conf">Categoría a la que pertenece</label>
+                        <select name="id_categoria" id="id_categoria_conf" class="form-control" required>
+                            <option value="">-- Seleccione una Categoría --</option>
+                            {% for cat in categorias %}
+                                <option value="{{ cat.id }}">{{ cat.nombre }} (ID: {{ cat.id }})</option>
+                            {% empty %}
+                                <option value="" disabled>No hay categorías creadas</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-grid mt-4">
+                        <div class="form-group"><label for="id_conf">ID Nueva Configuración</label><input type="number" name="id" id="id_conf" class="form-control" required></div>
+                        <div class="form-group"><label for="nombre_conf">Nombre Configuración</label><input type="text" name="nombre" id="nombre_conf" class="form-control" required></div>
+                    </div>
+                    <div class="form-group mt-4"><label for="descripcion_conf">Descripción</label><input type="text" name="descripcion" id="descripcion_conf" class="form-control" required></div>
+
+                    <!-- NUEVO: Sección para añadir recursos dinámicamente -->
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-md font-semibold mb-2 text-gray-700">Añadir Recursos a la Configuración</h3>
+                        <div id="recursos-container">
+                            <!-- Los campos de recursos se añadirán aquí -->
+                        </div>
+                        <button type="button" id="add-recurso-btn" class="text-sm text-green-600 hover:text-green-800 mt-2">+ Añadir Recurso</button>
+                    </div>
+                    <!-- FIN NUEVO -->
+
+                    <button type="submit" class="btn mt-4">Crear Configuración</button>
+                </form>
+            </div>
+
+            <!-- Formulario Crear Instancia -->
+            <div class="card">
+                <div class="card-header"><h2>Crear Instancia para Cliente</h2></div>
+                <form method="post" class="card-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="crear_instancia">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nit_inst">NIT del Cliente</label>
+                            <select name="nit" id="nit_inst" class="form-control" required>
+                                <option value="">-- Seleccione un Cliente --</option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.nit }}">{{ cliente.nombre }} ({{ cliente.nit }})</option>
+                                {% empty %}<option value="" disabled>No se pudieron cargar clientes</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_configuracion_inst">Configuración a usar</label>
+                            <select name="id_configuracion" id="id_configuracion_inst" class="form-control" required>
+                                <option value="">-- Seleccione una Configuración --</option>
+                                {% for conf in configuraciones %}
+                                    <option value="{{ conf.id }}">{{ conf.nombre }} (ID: {{ conf.id }})</option>
+                                {% empty %}<option value="" disabled>No hay configuraciones creadas</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group"><label for="id_inst">ID Nueva Instancia</label><input type="number" name="id" id="id_inst" class="form-control" required></div>
+                        <div class="form-group"><label for="nombre_inst">Nombre de la Instancia</label><input type="text" name="nombre" id="nombre_inst" class="form-control" required></div>
+                    </div>
+                    <div class="form-group mt-4"><label for="fecha_inicio_inst">Fecha Inicio</label><input type="date" name="fecha_inicio" id="fecha_inicio_inst" class="form-control" required></div>
+                    <button type="submit" class="btn mt-2">Crear Instancia</button>
+                </form>
+            </div>
+
+            <!-- Formulario Cancelar Instancia -->
+            <div class="card">
+                <div class="card-header"><h2>Cancelar Instancia</h2></div>
+                <form method="post" class="card-content">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="cancelar_instancia">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nit_cancelar">NIT del Cliente</label>
+                            <select name="nit" id="nit_cancelar" class="form-control" required>
+                                <option value="">-- Seleccione un Cliente --</option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.nit }}">{{ cliente.nombre }} ({{ cliente.nit }})</option>
+                                {% empty %}<option value="" disabled>No se pudieron cargar clientes</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_instancia_cancelar">ID Instancia a Cancelar</label>
+                            <select name="id_instancia" id="id_instancia_cancelar" class="form-control" required>
+                                <option value="">-- Seleccione un cliente primero --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group mt-4"><label for="fecha_final_cancelar">Fecha Final</label><input type="date" name="fecha_final" id="fecha_final_cancelar" class="form-control" required></div>
+                    <button type="submit" class="btn btn-danger mt-2">Cancelar Instancia</button>
+                </form>
+            </div>
+
+        </div> <!-- Fin Columna 2 -->
+    </div> <!-- Fin Grid -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Parsea los datos completos pasados desde la vista de Django
+    const fullData = {{ full_data_json|safe }};
+    const recursosDisponibles = {{ recursos|safe }}; // Recursos disponibles
+
+    // --- Lógica para Cancelar Instancia (Dropdown Dinámico) ---
+    document.getElementById('nit_cancelar').addEventListener('change', function() {
+        const selectedNit = this.value;
+        const instanciaSelect = document.getElementById('id_instancia_cancelar');
+        instanciaSelect.innerHTML = '<option value="">-- Cargando instancias... --</option>';
+
+        if (!selectedNit || !fullData.clientes) {
+            instanciaSelect.innerHTML = '<option value="">-- Seleccione un cliente primero --</option>'; return;
+        }
+        const cliente = fullData.clientes.find(c => c.nit === selectedNit);
+        
+        if (cliente && cliente.instancias && cliente.instancias.length > 0) {
+            const instanciasVigentes = cliente.instancias.filter(inst => inst.estado === 'Vigente');
+            if (instanciasVigentes.length > 0) {
+                instanciaSelect.innerHTML = '<option value="">-- Seleccione una instancia --</option>';
+                instanciasVigentes.forEach(inst => {
+                    instanciaSelect.innerHTML += `<option value="${inst.id}">${inst.nombre} (ID: ${inst.id})</option>`;
+                });
+            } else {
+                instanciaSelect.innerHTML = '<option value="" disabled>Este cliente no tiene instancias vigentes</option>';
+            }
+        } else {
+            instanciaSelect.innerHTML = '<option value="" disabled>Cliente sin instancias</option>';
+        }
+    });
+    // Auto-rellenar fecha de cancelación
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_final_cancelar').value = today;
+
+    // --- NUEVO: Lógica para Añadir Recursos a Configuración ---
+    let recursoIndex = 0;
+    const recursosContainer = document.getElementById('recursos-container');
+    const addRecursoBtn = document.getElementById('add-recurso-btn');
+
+    function addRecursoFields() {
+        const div = document.createElement('div');
+        div.classList.add('form-grid', 'mb-2', 'pb-2', 'border-b', 'border-gray-200'); // Estilos para separar
+        div.innerHTML = `
+            <div class="form-group">
+                <label for="recurso_id_${recursoIndex}">Recurso</label>
+                <select name="recurso_id_${recursoIndex}" id="recurso_id_${recursoIndex}" class="form-control" required>
+                    <option value="">-- Seleccione Recurso --</option>
+                    ${recursosDisponibles.map(rec => `<option value="${rec.id}">${rec.nombre} (${rec.abreviatura})</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="recurso_cantidad_${recursoIndex}">Cantidad (${getMetricaPlaceholder(null)})</label>
+                <input type="number" name="recurso_cantidad_${recursoIndex}" id="recurso_cantidad_${recursoIndex}" class="form-control" step="0.01" required placeholder="Ej: 16, 0.5">
+            </div>
+            <button type="button" onclick="removeRecurso(this)" class="text-red-500 hover:text-red-700 text-sm self-end mb-3">Eliminar</button>
+        `;
+        recursosContainer.appendChild(div);
+
+        // Actualizar la métrica cuando se seleccione un recurso
+        const selectElement = div.querySelector(`#recurso_id_${recursoIndex}`);
+        const cantidadLabel = div.querySelector(`label[for='recurso_cantidad_${recursoIndex}']`);
+        selectElement.addEventListener('change', function() {
+             const selectedId = this.value;
+             const metrica = getMetricaPlaceholder(selectedId);
+             cantidadLabel.textContent = `Cantidad (${metrica})`;
+        });
+
+        recursoIndex++;
+    }
+
+    function getMetricaPlaceholder(recursoId) {
+        if (!recursoId) return 'Ej: Gb, Núcleos';
+        const recurso = recursosDisponibles.find(r => r.id == recursoId); // Usar == para comparación flexible
+        return recurso ? recurso.metrica : 'Cantidad';
+    }
+
+
+    function removeRecurso(button) {
+        button.closest('.form-grid').remove(); // Elimina el div contenedor del recurso
+    }
+
+    addRecursoBtn.addEventListener('click', addRecursoFields);
+
+    // Añadir un campo de recurso inicial si no hay ninguno (opcional)
+    // if (recursoIndex === 0) {
+    //    addRecursoFields();
+    // }
+
+</script>
+{% endblock %}
+

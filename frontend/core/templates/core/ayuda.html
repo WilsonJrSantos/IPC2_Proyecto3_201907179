@@ -1,0 +1,62 @@
+{% extends "core/base.html" %}
+{% load static %} <!-- MUY IMPORTANTE: Cargar la librería de archivos estáticos -->
+
+{% block title %}Ayuda - {{ block.super }}{% endblock %}
+
+{% block header_title %}
+    Ayuda y Documentación
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Datos del Estudiante</h2>
+    </div>
+    <div class="card-content">
+        <ul class="list-disc list-inside text-gray-700">
+            <li><strong>Nombre:</strong> {{ student_name }}</li>
+            <li><strong>Carnet:</strong> {{ student_id }}</li>
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Documentación del Proyecto</h2>
+    </div>
+    <div class="card-content">
+        <p class="mb-4 text-gray-700">Presione el siguiente botón para abrir la documentación oficial del proyecto en formato PDF.</p>
+        
+        <!-- 
+         NOTA IMPORTANTE:
+         Para que este link funcione, debes hacer lo siguiente:
+         1. Dentro de `frontend/core/`, crea una carpeta llamada `static`.
+         2. Dentro de `static/`, crea otra carpeta llamada `core`.
+         3. Dentro de `core/`, crea una carpeta llamada `docs`.
+         4. Coloca tu archivo PDF allí con el nombre `documentacion_proyecto.pdf`.
+
+         La ruta final será: `frontend/core/static/core/docs/documentacion_proyecto.pdf`
+        -->
+        <a href="{% static 'core/docs/documentacion_proyecto.pdf' %}" class="btn" target="_blank">
+            <i class="fas fa-file-pdf mr-2"></i>
+            Abrir Documentación del Proyecto (PDF)
+        </a>
+        
+        <h3 class="text-xl font-semibold mt-6 mb-2 text-gray-800">Flujo de Trabajo Básico</h3>
+        <ol class="list-decimal list-inside text-gray-700 space-y-2">
+            <li>Ve a <strong>Inicializar Sistema</strong> para limpiar todos los datos.</li>
+            <li>Ve a <strong>Inicio (Consultas)</strong> y carga un <strong>Archivo de Configuración</strong> XML.</li>
+            <li>Verifica en las pestañas de abajo que los Clientes, Categorías y Recursos se hayan cargado.</li>
+            <li>(Opcional) Ve a <strong>Creación de Datos</strong> para añadir más clientes, categorías, etc., manualmente.</li>
+            <li>Ve a <strong>Inicio (Consultas)</strong> y carga un <strong>Archivo de Consumo</strong> XML.</li>
+            <li>Ve a la pestaña <strong>Clientes</strong> y verifica que el contador de "Consumos pendientes" haya aumentado.</li>
+            <li>Ve a <strong>Facturación</strong>, selecciona un cliente y un rango de fechas, y genera la factura.</li>
+            <li>Ve a <strong>Reportes de Ventas</strong> para analizar los ingresos generados.</li>
+        </ol>
+
+    </div>
+</div>
+
+{% endblock %}
+

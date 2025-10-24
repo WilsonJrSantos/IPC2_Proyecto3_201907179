@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sistemaTecnologiasChapinas>
+  <listaRecursos/>
+  <listaCategorias>
+    <categoria id="1">
+      <nombre>Ejemplo1</nombre>
+      <descripcion>b</descripcion>
+      <cargaTrabajo>media</cargaTrabajo>
+      <listaConfiguraciones>
+        <configuracion id="1">
+          <nombre>Algo 1</nombre>
+          <descripcion>asdf</descripcion>
+          <recursosConfiguracion/>
+        </configuracion>
+      </listaConfiguraciones>
+    </categoria>
+  </listaCategorias>
+  <listaClientes>
+    <cliente nit="232323-5">
+      <nombre>wimi</nombre>
+      <usuario>wimi</usuario>
+      <clave>213456</clave>
+      <direccion>wimi</direccion>
+      <correoElectronico>asdf@asd.com</correoElectronico>
+      <listaInstancias>
+        <instancia id="2">
+          <idConfiguracion>1</idConfiguracion>
+          <nombre>EC2</nombre>
+          <fechaInicio>12/04/2025</fechaInicio>
+          <estado>Vigente</estado>
+          <fechaFinal/>
+          <consumosPendientes/>
+        </instancia>
+      </listaInstancias>
+    </cliente>
+  </listaClientes>
+  <listaFacturas/>
+</sistemaTecnologiasChapinas>

@@ -1,49 +1,225 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Tecnologías Chapinas - Admin</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .card { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 8px; }
-        pre { background-color: #f4f4f4; padding: 1em; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <h1>Panel de Administración</h1>
+{% extends "core/base.html" %}
 
-    <div class="card">
-        <h2>Cargar Archivo de Configuración (.xml)</h2>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" name="config_file" required>
-            <button type="submit">Enviar Configuración</button>
-        </form>
-        {% if config_message %}<p><strong>Respuesta:</strong> {{ config_message }}</p>{% endif %}
+{% block title %}Inicio - {{ block.super }}{% endblock %}
+
+{% block header_title %}
+    Carga de Datos y Consulta
+{% endblock %}
+
+{% block content %}
+
+    <!-- Mensaje de feedback -->
+    {% if message %}
+        <div class="message {{ message.1 }}">
+            <strong>Respuesta:</strong> {{ message.0 }}
+        </div>
+    {% endif %}
+
+    <!-- Formularios de Carga de Archivos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card">
+            <div class="card-header">
+                <h2>Cargar Archivo de Configuración (.xml)</h2>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="card-content">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="config_file">Seleccionar archivo de configuración:</label>
+                    <input type="file" name="config_file" id="config_file" class="form-control" required>
+                </div>
+                <button type="submit" class="btn">Enviar Configuración</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Cargar Archivo de Consumo (.xml)</h2>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="card-content">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="consumo_file">Seleccionar archivo de consumo:</label>
+                    <input type="file" name="consumo_file" id="consumo_file" class="form-control" required>
+                </div>
+                <button type="submit" class="btn">Enviar Consumo</button>
+            </form>
+        </div>
     </div>
 
+    <!-- Pestañas para Visualización de Datos -->
     <div class="card">
-        <h2>Cargar Archivo de Consumo (.xml)</h2>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" name="consumo_file" required>
-            <button type="submit">Enviar Consumo</button>
-        </form>
-        {% if consumo_message %}<p><strong>Respuesta:</strong> {{ consumo_message }}</p>{% endif %}
-    </div>
+        <div class="card-header">
+            <h2>Datos Actuales del Sistema</h2>
+        </div>
+        <div class="card-content">
+            {% if datos %}
+                <div class="tabs">
+                    <span class="tab-link active" onclick="openTab(event, 'tab-clientes')">Clientes</span>
+                    <span class="tab-link" onclick="openTab(event, 'tab-categorias')">Categorías</span>
+                    <span class="tab-link" onclick="openTab(event, 'tab-recursos')">Recursos</span>
+                    <span class="tab-link" onclick="openTab(event, 'tab-facturas')">Facturas</span>
+                    <span class="tab-link" onclick="openTab(event, 'tab-json')">Raw JSON</span>
+                </div>
 
-    <div class="card">
-        <h2>Datos Actuales del Sistema</h2>
-        {% if datos %}
-            <pre>{{ datos | safe }}</pre>
-        {% elif datos_error %}
-            <p style="color: red;">{{ datos_error }}</p>
-        {% else %}
-            <p>No hay datos para mostrar.</p>
-        {% endif %}
-    </div>
+                <!-- Pestaña Clientes -->
+                <div id="tab-clientes" class="tab-content active table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>NIT</th>
+                                <th>Nombre</th>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Instancias</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in datos.clientes %}
+                            <tr>
+                                <td>{{ cliente.nit }}</td>
+                                <td>{{ cliente.nombre }}</td>
+                                <td>{{ cliente.usuario }}</td>
+                                <td>{{ cliente.correo }}</td>
+                                <td>
+                                    {% for inst in cliente.instancias %}
+                                        <li>
+                                            <strong>{{ inst.nombre }}</strong> (ID: {{ inst.id }}) - {{ inst.estado }}<br>
+                                            <small>Consumos pendientes: {{ inst.consumos|length }}</small>
+                                        </li>
+                                    {% empty %}
+                                        <span class="text-gray-500">Sin instancias</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5">No hay clientes cargados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-    <hr>
-    <a href="{% url 'reset_data' %}">Operaciones del Sistema (Resetear)</a>
-</body>
-</html>
+                <!-- Pestaña Categorías -->
+                <div id="tab-categorias" class="tab-content table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Carga de Trabajo</th>
+                                <th>Configuraciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in datos.categorias %}
+                            <tr>
+                                <td>{{ cat.id }}</td>
+                                <td>{{ cat.nombre }}</td>
+                                <td>{{ cat.carga_trabajo }}</td>
+                                <td>
+                                    {% for conf in cat.configuraciones %}
+                                        <li>
+                                            <strong>{{ conf.nombre }}</strong> (ID: {{ conf.id }})<br>
+                                            <small>Recursos: {{ conf.recursos|length }}</small>
+                                        </li>
+                                    {% empty %}
+                                        <span class="text-gray-500">Sin configuraciones</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4">No hay categorías cargadas.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pestaña Recursos -->
+                <div id="tab-recursos" class="tab-content table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Abreviatura</th>
+                                <th>Métrica</th>
+                                <th>Tipo</th>
+                                <th>Valor por Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec in datos.recursos %}
+                            <tr>
+                                <td>{{ rec.id }}</td>
+                                <td>{{ rec.nombre }}</td>
+                                <td>{{ rec.abreviatura }}</td>
+                                <td>{{ rec.metrica }}</td>
+                                <td>{{ rec.tipo }}</td>
+                                <td>Q{{ rec.valor_x_hora|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6">No hay recursos cargados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pestaña Facturas -->
+                <div id="tab-facturas" class="tab-content table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Factura</th>
+                                <th>NIT Cliente</th>
+                                <th>Fecha</th>
+                                <th>Monto Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fact in datos.facturas %}
+                            <tr>
+                                <td>{{ fact.id }}</td>
+                                <td>{{ fact.nit_cliente }}</td>
+                                <td>{{ fact.fecha_factura }}</td>
+                                <td>Q{{ fact.monto_total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4">No hay facturas generadas.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pestaña JSON -->
+                <div id="tab-json" class="tab-content">
+                    <pre>{{ datos|pprint }}</pre>
+                </div>
+
+            {% elif datos_error %}
+                <p class="message error">{{ datos_error }}</p>
+            {% else %}
+                <p>No hay datos cargados en el sistema.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openTab(event, tabID) {
+        // Ocultar todo el contenido de las pestañas
+        let tabContents = document.querySelectorAll(".tab-content");
+        tabContents.forEach(tc => tc.style.display = "none");
+
+        // Quitar la clase 'active' de todos los enlaces
+        let tabLinks = document.querySelectorAll(".tab-link");
+        tabLinks.forEach(tl => tl.classList.remove("active"));
+
+        // Mostrar el contenido de la pestaña seleccionada
+        document.getElementById(tabID).style.display = "block";
+
+        // Añadir la clase 'active' al enlace clicado
+        event.currentTarget.classList.add("active");
+    }
+</script>
+{% endblock %}
+

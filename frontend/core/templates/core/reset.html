@@ -1,18 +1,33 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Resetear Sistema</title>
-</head>
-<body>
-    <h1>Inicializar Sistema</h1>
-    <p>Esta acción eliminará todos los datos de la base de datos.</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Confirmar Inicialización</button>
-    </form>
-    {% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
-    <br>
-    <a href="{% url 'home' %}">Volver al inicio</a>
-</body>
-</html>
+{% extends "core/base.html" %}
+
+{% block title %}Inicializar Sistema - {{ block.super }}{% endblock %}
+
+{% block header_title %}
+    Operaciones del Sistema
+{% endblock %}
+
+{% block content %}
+
+    {% if message %}
+        <div class="message {{ message.1 }}">
+            <strong>Respuesta:</strong> {{ message.0 }}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Inicializar Sistema</h2>
+        </div>
+        <div class="card-content">
+            <p class="mb-4 text-gray-700">
+                Esta acción eliminará todos los datos de la base de datos persistente (el archivo XML) 
+                y reiniciará el sistema. Esta acción no se puede deshacer.
+            </p>
+            <form method="post" onsubmit="return confirm('¿Estás seguro de que deseas inicializar el sistema? Todo se borrará permanentemente.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Confirmar Inicialización</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

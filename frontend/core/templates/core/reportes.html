@@ -1,0 +1,117 @@
+{% extends "core/base.html" %}
+
+{% block title %}Reportes de Ventas - {{ block.super }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilos específicos para tablas de reportes */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+    }
+    th, td {
+        border: 1px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        text-align: left;
+    }
+    th {
+        background-color: #f7fafc;
+        font-weight: 600;
+        color: #4a5568;
+    }
+    tbody tr:nth-child(even) {
+        background-color: #fcfcfc;
+    }
+    .total-col {
+        font-weight: 600;
+        text-align: right;
+    }
+    tfoot tr {
+        background-color: #f7fafc;
+        font-weight: 600;
+    }
+</style>
+
+<h1>Reportes de Ventas</h1>
+
+{% if message %}
+    <div class="message {{ message.1 }}"><strong>Respuesta:</strong> {{ message.0 }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Generar Reporte de Análisis de Ventas</h2>
+    </div>
+    <form method="post" class="card-content">
+        {% csrf_token %}
+        <p class="text-sm text-gray-600 mb-4">
+            Seleccione un tipo de reporte y un rango de fechas para analizar los ingresos generados por las facturas emitidas.
+        </p>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="report_type">Tipo de Reporte</label>
+                <select name="report_type" id="report_type" class="form-control" required>
+                    <option value="recursos" {% if form_data.report_type == 'recursos' %}selected{% endif %}>
+                        Recursos que más ingresos generan
+                    </option>
+                    <option value="categorias" {% if form_data.report_type == 'categorias' %}selected{% endif %}>
+                        Categorías/Configuraciones que más ingresos generan
+                    </option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fecha_inicio">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ form_data.fecha_inicio }}" required>
+            </div>
+            <div class="form-group">
+                <label for="fecha_fin">Fecha Fin</label>
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ form_data.fecha_fin }}" required>
+            </div>
+        </div>
+        <button type="submit" class="btn mt-4">Generar Reporte</button>
+    </form>
+</div>
+
+{% if reporte_data %}
+<div class="card">
+    <div class="card-header">
+        <h2>Resultado: {{ reporte_titulo }}</h2>
+    </div>
+    <div class="card-content table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th style="text-align: right;">Total Generado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item, total in reporte_data %}
+                <tr>
+                    <td>{{ item }}</td>
+                    <td class="total-col">Q{{ total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">No se encontraron datos para este reporte en el rango de fechas seleccionado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {% if reporte_data %}
+            <tfoot>
+                <tr>
+                    <td style="font-weight: 600; text-align: right;">TOTAL</td>
+                    <!-- Total calculado en la vista, sin mathfilters -->
+                    <td class="total-col">Q{{ total_general|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
