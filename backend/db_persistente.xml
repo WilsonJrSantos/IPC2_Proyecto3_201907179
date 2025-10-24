@@ -1,35 +1,232 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" ?>
 <sistemaTecnologiasChapinas>
-  <listaRecursos/>
+  <listaRecursos>
+    <recurso id="1">
+      <nombre>Memoria de acceso aleatorio</nombre>
+      <abreviatura>RAM</abreviatura>
+      <metrica>Gb</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>40.0</valorXhora>
+    </recurso>
+    <recurso id="2">
+      <nombre>Unidad central de procesamiento</nombre>
+      <abreviatura>CPU</abreviatura>
+      <metrica>Núcleos</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>55.0</valorXhora>
+    </recurso>
+    <recurso id="3">
+      <nombre>Disco duro sólido</nombre>
+      <abreviatura>SSD</abreviatura>
+      <metrica>Gb</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>25.0</valorXhora>
+    </recurso>
+    <recurso id="4">
+      <nombre>Teclado</nombre>
+      <abreviatura>TCL</abreviatura>
+      <metrica>Unidad</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>60.0</valorXhora>
+    </recurso>
+    <recurso id="5">
+      <nombre>Recurso 5</nombre>
+      <abreviatura>R5</abreviatura>
+      <metrica>Licencia</metrica>
+      <tipo>SOFTWARE</tipo>
+      <valorXhora>82.5</valorXhora>
+    </recurso>
+    <recurso id="6">
+      <nombre>Tarjeta gráfica</nombre>
+      <abreviatura>GPU</abreviatura>
+      <metrica>Unidad</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>120.0</valorXhora>
+    </recurso>
+    <recurso id="7">
+      <nombre>Sistema operativo</nombre>
+      <abreviatura>SO</abreviatura>
+      <metrica>Licencia</metrica>
+      <tipo>SOFTWARE</tipo>
+      <valorXhora>90.0</valorXhora>
+    </recurso>
+    <recurso id="8">
+      <nombre>Base de datos SQL</nombre>
+      <abreviatura>SQLDB</abreviatura>
+      <metrica>Instancia</metrica>
+      <tipo>SOFTWARE</tipo>
+      <valorXhora>110.0</valorXhora>
+    </recurso>
+    <recurso id="9">
+      <nombre>Monitor</nombre>
+      <abreviatura>MON</abreviatura>
+      <metrica>Unidad</metrica>
+      <tipo>HARDWARE</tipo>
+      <valorXhora>45.0</valorXhora>
+    </recurso>
+    <recurso id="10">
+      <nombre>Framework de desarrollo</nombre>
+      <abreviatura>FWK</abreviatura>
+      <metrica>Licencia</metrica>
+      <tipo>SOFTWARE</tipo>
+      <valorXhora>70.0</valorXhora>
+    </recurso>
+  </listaRecursos>
   <listaCategorias>
     <categoria id="1">
-      <nombre>Ejemplo1</nombre>
-      <descripcion>b</descripcion>
-      <cargaTrabajo>media</cargaTrabajo>
+      <nombre>Categoria 1</nombre>
+      <descripcion>Configuraciones de alta carga</descripcion>
+      <cargaTrabajo>Alta</cargaTrabajo>
       <listaConfiguraciones>
         <configuracion id="1">
-          <nombre>Algo 1</nombre>
-          <descripcion>asdf</descripcion>
-          <recursosConfiguracion/>
+          <nombre>C1C1</nombre>
+          <descripcion>Configuración media</descripcion>
+          <recursosConfiguracion>
+            <recurso id="1">25.0</recurso>
+            <recurso id="3">5.0</recurso>
+          </recursosConfiguracion>
+        </configuracion>
+        <configuracion id="2">
+          <nombre>C1C2</nombre>
+          <descripcion>Configuración baja</descripcion>
+          <recursosConfiguracion>
+            <recurso id="2">3.0</recurso>
+            <recurso id="4">7.0</recurso>
+          </recursosConfiguracion>
+        </configuracion>
+      </listaConfiguraciones>
+    </categoria>
+    <categoria id="2">
+      <nombre>Categoria 2</nombre>
+      <descripcion>Configuraciones para aplicaciones gráficas</descripcion>
+      <cargaTrabajo>Media</cargaTrabajo>
+      <listaConfiguraciones>
+        <configuracion id="3">
+          <nombre>C2-C1</nombre>
+          <descripcion>Configuración para renderizado</descripcion>
+          <recursosConfiguracion>
+            <recurso id="1">16.0</recurso>
+            <recurso id="2">8.0</recurso>
+            <recurso id="6">2.0</recurso>
+          </recursosConfiguracion>
+        </configuracion>
+        <configuracion id="4">
+          <nombre>C2-C2</nombre>
+          <descripcion>Configuración para diseño gráfico</descripcion>
+          <recursosConfiguracion>
+            <recurso id="6">1.0</recurso>
+            <recurso id="9">2.0</recurso>
+            <recurso id="7">1.0</recurso>
+          </recursosConfiguracion>
+        </configuracion>
+      </listaConfiguraciones>
+    </categoria>
+    <categoria id="3">
+      <nombre>Categoria 3</nombre>
+      <descripcion>Configuraciones de servidores de datos</descripcion>
+      <cargaTrabajo>Alta</cargaTrabajo>
+      <listaConfiguraciones>
+        <configuracion id="5">
+          <nombre>Cat3-Conf1</nombre>
+          <descripcion>Servidor SQL empresarial</descripcion>
+          <recursosConfiguracion>
+            <recurso id="2">12.0</recurso>
+            <recurso id="3">200.0</recurso>
+            <recurso id="8">1.0</recurso>
+          </recursosConfiguracion>
+        </configuracion>
+        <configuracion id="6">
+          <nombre>Cat3-Conf2</nombre>
+          <descripcion>Servidor de aplicaciones web</descripcion>
+          <recursosConfiguracion>
+            <recurso id="2">6.0</recurso>
+            <recurso id="7">1.0</recurso>
+            <recurso id="10">1.0</recurso>
+          </recursosConfiguracion>
         </configuracion>
       </listaConfiguraciones>
     </categoria>
   </listaCategorias>
   <listaClientes>
-    <cliente nit="232323-5">
-      <nombre>wimi</nombre>
-      <usuario>wimi</usuario>
-      <clave>213456</clave>
-      <direccion>wimi</direccion>
-      <correoElectronico>asdf@asd.com</correoElectronico>
+    <cliente nit="73384-9">
+      <nombre>Prensa Libre</nombre>
+      <usuario>plibre</usuario>
+      <clave>clavePLibre</clave>
+      <direccion>Direccion del cliente</direccion>
+      <correoElectronico>eMailCliente</correoElectronico>
       <listaInstancias>
-        <instancia id="2">
+        <instancia id="1">
           <idConfiguracion>1</idConfiguracion>
-          <nombre>EC2</nombre>
-          <fechaInicio>12/04/2025</fechaInicio>
+          <nombre>Primera instancia</nombre>
+          <fechaInicio>26/02/2003</fechaInicio>
           <estado>Vigente</estado>
           <fechaFinal/>
-          <consumosPendientes/>
+          <consumosPendientes>
+            <consumo>15.2</consumo>
+            <consumo>5.57</consumo>
+          </consumosPendientes>
+        </instancia>
+      </listaInstancias>
+    </cliente>
+    <cliente nit="992929-0">
+      <nombre>Claro</nombre>
+      <usuario>c1ar0</usuario>
+      <clave>claro123</clave>
+      <direccion>Zona 10, Ciudad de Guatemala</direccion>
+      <correoElectronico>claro@example.com</correoElectronico>
+      <listaInstancias>
+        <instancia id="3">
+          <idConfiguracion>3</idConfiguracion>
+          <nombre>Servidor Render Claro</nombre>
+          <fechaInicio>01/03/2022</fechaInicio>
+          <estado>Vigente</estado>
+          <fechaFinal/>
+          <consumosPendientes>
+            <consumo>5.0</consumo>
+            <consumo>2.56</consumo>
+          </consumosPendientes>
+        </instancia>
+        <instancia id="4">
+          <idConfiguracion>4</idConfiguracion>
+          <nombre>Diseño Gráfico Profesional</nombre>
+          <fechaInicio>15/05/2023</fechaInicio>
+          <estado>Vigente</estado>
+          <fechaFinal/>
+          <consumosPendientes>
+            <consumo>5.3</consumo>
+            <consumo>4.0</consumo>
+          </consumosPendientes>
+        </instancia>
+      </listaInstancias>
+    </cliente>
+    <cliente nit="32105-2">
+      <nombre>Gasolinera Shell</nombre>
+      <usuario>shell</usuario>
+      <clave>shellpass</clave>
+      <direccion>Zona 3, Guatemala</direccion>
+      <correoElectronico>shell@email.com</correoElectronico>
+      <listaInstancias>
+        <instancia id="5">
+          <idConfiguracion>5</idConfiguracion>
+          <nombre>Servidor SQL Empresarial</nombre>
+          <fechaInicio>01/06/2021</fechaInicio>
+          <estado>Vigente</estado>
+          <fechaFinal/>
+          <consumosPendientes>
+            <consumo>10.0</consumo>
+            <consumo>5.28</consumo>
+          </consumosPendientes>
+        </instancia>
+        <instancia id="6">
+          <idConfiguracion>6</idConfiguracion>
+          <nombre>Aplicaciones Web Corporativas</nombre>
+          <fechaInicio>10/07/2022</fechaInicio>
+          <estado>Vigente</estado>
+          <fechaFinal/>
+          <consumosPendientes>
+            <consumo>5.9</consumo>
+            <consumo>7.0</consumo>
+          </consumosPendientes>
         </instancia>
       </listaInstancias>
     </cliente>

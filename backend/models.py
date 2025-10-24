@@ -52,48 +52,52 @@ class Cliente:
     instancias: List[Instancia] = field(default_factory=list)
 
 # --- Modelos de Facturación ---
-# CORRECCIÓN: Nombres actualizados para coincidir con el uso
 @dataclass
-class DetalleRecursoInstancia: # Anteriormente DetalleRecursoFacturado
-    id_recurso: int # Añadido ID para referencia
+class DetalleRecursoInstancia:
+    id_recurso: int
     nombre_recurso: str
     cantidad: float
-    metrica: str # Añadido para mostrar en factura
+    metrica: str
     valor_x_hora: float
-    # horas_consumidas: float # Se obtiene del DetalleInstanciaFactura
-    subtotal: float # Aporte al total de la instancia
+    subtotal: float
 
     def to_dict(self):
        return asdict(self)
 
 
 @dataclass
-class DetalleInstanciaFactura: # Anteriormente DetalleInstanciaFacturada
+class DetalleInstanciaFactura:
+    # --- CORRECCIÓN: Reordenar campos ---
+    # Campos sin valor por defecto primero
     id_instancia: int
     nombre_instancia: str
     id_configuracion: int
-    nombre_configuracion: str # Añadido para mostrar en factura
-    id_categoria: int = None # Puede que no se encuentre si la config fue borrada?
-    horas_consumidas: float # Total de horas para esta instancia en la factura
+    nombre_configuracion: str
+    horas_consumidas: float
     subtotal_instancia: float
-    recursos_costo: List[DetalleRecursoInstancia] = field(default_factory=list) # CORRECCIÓN: Usar nombre corregido
+    # Campos con valor por defecto después
+    id_categoria: int = None
+    recursos_costo: List[DetalleRecursoInstancia] = field(default_factory=list)
+    # --- FIN CORRECCIÓN ---
 
     def to_dict(self):
         d = asdict(self)
+        # Asegurarse de que los objetos anidados también se conviertan
         d['recursos_costo'] = [rc.to_dict() for rc in self.recursos_costo]
         return d
 
 @dataclass
 class Factura:
-    id: int # Cambiado de numero a id para consistencia
+    id: int
     nit_cliente: str
     nombre_cliente: str
-    fecha_factura: str # Fecha fin del rango (dd/mm/yyyy)
+    fecha_factura: str # dd/mm/yyyy
     monto_total: float
-    detalles_instancias: List[DetalleInstanciaFactura] = field(default_factory=list) # CORRECCIÓN: Usar nombre corregido
+    detalles_instancias: List[DetalleInstanciaFactura] = field(default_factory=list)
 
     def to_dict(self):
        d = asdict(self)
+       # Asegurarse de que los objetos anidados también se conviertan
        d['detalles_instancias'] = [di.to_dict() for di in self.detalles_instancias]
        return d
 

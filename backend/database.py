@@ -192,8 +192,9 @@ class Datalake:
                                 continue
                             id_conf = int(id_conf_str)
 
+                            # Usa el diccionario actualizado de configs para validar
                             if id_conf not in current_configs:
-                                errores.append(f"Cliente NIT {nit}, Instancia ID {id_inst}: Config ID {id_conf} referenciada no existe. Saltando instancia.")
+                                errores.append(f"Cliente NIT {nit}, Instancia ID {id_inst}: Config ID {id_conf} referenciada no existe globalmente. Saltando instancia.")
                                 continue
 
                             estado = (inst_elem.findtext('estado') or '').strip().upper()
@@ -245,6 +246,8 @@ class Datalake:
                 for i, err in enumerate(errores): print(f"{i+1}. {err}")
                 print("---------------------------------------------\n")
 
+            # Guardar después de procesar todo el XML
+            self.guardar_a_xml()
             return {"status": "success", "message": mensaje}
 
         except ET.ParseError as e:
@@ -304,7 +307,8 @@ class Datalake:
                  for i, err in enumerate(errores): print(f"{i+1}. {err}")
                  print("----------------------------------------------\n")
 
-
+            # Guardar después de procesar todos los consumos
+            self.guardar_a_xml()
             return {"status": "success", "message": mensaje}
 
         except ET.ParseError as e:
@@ -422,11 +426,14 @@ class Datalake:
         """ Guarda el estado actual de los datos en el archivo XML persistente. """
         # CORRECCIÓN: Asegurar que el directorio exista ANTES de intentar escribir
         try:
-            os.makedirs(os.path.dirname(self.db_file) or '.', exist_ok=True)
+             # Si db_file es solo nombre (sin ruta), dirname será '', lo cual es válido para os.makedirs
+            dir_path = os.path.dirname(self.db_file)
+            if dir_path: # Solo crear si hay un directorio especificado
+                os.makedirs(dir_path, exist_ok=True)
         except OSError as e:
-            print(f"Advertencia: No se pudo crear el directorio para {self.db_file}: {e}")
-            # Decide si continuar o no. Podríamos intentar guardar en el directorio actual.
-            # self.db_file = os.path.basename(self.db_file) # Guarda solo el nombre del archivo
+            print(f"Advertencia: No se pudo crear el directorio para {self.db_file}: {e}. Intentando guardar en directorio actual.")
+            # Podríamos intentar guardar en el directorio actual si falla
+            self.db_file = os.path.basename(self.db_file) # Usar solo el nombre
 
         root = ET.Element("sistemaTecnologiasChapinas")
 
@@ -508,14 +515,19 @@ class Datalake:
         try:
             xml_str_bytes = ET.tostring(root, encoding='utf-8', method='xml')
             dom = minidom.parseString(xml_str_bytes)
-            pretty_xml_str_bytes = dom.toprettyxml(indent="  ", encoding='utf-8')
+            # Indentación con dos espacios
+            pretty_xml_str = dom.toprettyxml(indent="  ")
+            # Eliminar la declaración XML duplicada y asegurar UTF-8
+            # pretty_xml_str = '\n'.join(line for line in pretty_xml_str.splitlines()[1:] if line.strip())
 
-            with open(self.db_file, "wb") as f:
-                f.write(pretty_xml_str_bytes)
+            with open(self.db_file, "w", encoding='utf-8') as f: # Escribir como texto UTF-8
+                 f.write(pretty_xml_str)
             # Quitar el print de aquí para no saturar consola, se puede loguear si se quiere
             # print(f"Datos guardados exitosamente en {self.db_file}")
         except Exception as e:
             print(f"Error CRÍTICO al intentar guardar en {self.db_file}: {e}")
+            import traceback
+            traceback.print_exc()
             # Considerar qué hacer aquí. ¿Lanzar excepción? ¿Intentar de nuevo?
 
     def cargar_desde_xml_persistente(self):
@@ -601,13 +613,15 @@ class Datalake:
                     for det_inst_elem in fac_elem.findall('.//detallesInstancias/detalleInstancia'):
                          try:
                             id_cat_text = det_inst_elem.findtext('idCategoria')
-                            id_categoria = int(id_cat_text) if id_cat_text else None
+                            id_categoria = int(id_cat_text) if id_cat_text and id_cat_text.isdigit() else None # Asegurar que sea numérico
 
                             detalle_inst = DetalleInstanciaFactura(
                                 id_instancia=int(det_inst_elem.attrib['idInstancia']), nombre_instancia=det_inst_elem.findtext('nombreInstancia', default=""),
                                 id_configuracion=int(det_inst_elem.findtext('idConfiguracion', default=0)), nombre_configuracion=det_inst_elem.findtext('nombreConfiguracion', default=""),
-                                id_categoria=id_categoria, horas_consumidas=float(det_inst_elem.findtext('horasConsumidas', default=0.0)),
-                                subtotal_instancia=float(det_inst_elem.findtext('subtotalInstancia', default=0.0)), recursos_costo=[] )
+                                horas_consumidas=float(det_inst_elem.findtext('horasConsumidas', default=0.0)),
+                                subtotal_instancia=float(det_inst_elem.findtext('subtotalInstancia', default=0.0)),
+                                id_categoria=id_categoria, # Mover aquí después de los no-default
+                                recursos_costo=[] )
                             for det_rec_elem in det_inst_elem.findall('.//recursosCosto/detalleRecurso'):
                                 try: detalle_inst.recursos_costo.append(DetalleRecursoInstancia(
                                         id_recurso=int(det_rec_elem.attrib['idRecurso']), nombre_recurso=det_rec_elem.findtext('nombreRecurso', default=""),
@@ -643,4 +657,3 @@ class Datalake:
 # Se crea aquí para que esté disponible para importación en app.py
 # La carga inicial se hace en el __init__
 datalake = Datalake()
-
