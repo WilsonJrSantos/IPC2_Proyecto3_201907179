@@ -3,60 +3,50 @@
 {% block title %}Facturación - {{ block.super }}{% endblock %}
 
 {% block header_title %}
-    Proceso de Facturación
+    Proceso de Facturación
 {% endblock %}
 
 {% block content %}
 
-    {% if message %}
-        <div class="message {{ message.1 }}">
-            <strong>Respuesta:</strong> {{ message.0 }}
-        </div>
-    {% endif %}
+    {% if message %}
+        <div class="message {{ message.1 }}">
+            <strong>Respuesta:</strong> {{ message.0 }}
+        </div>
+    {% endif %}
 
-    <div class="card">
-        <div class="card-header">
-            <h2>Generar Factura en PDF</h2>
-        </div>
-        <form method="post" class="card-content" target="_blank">
-            <!-- target="_blank" abre el PDF en una nueva pestaña -->
-            {% csrf_token %}
-            
-            <p class="mb-4 text-gray-700">
-                Seleccione un cliente y un rango de fechas para generar la factura.
-                Esto procesará todos los consumos pendientes para ese cliente dentro del rango y 
-                los marcará como facturados.
-            </p>
+    <div class="card">
+        <div class="card-header">
+            <h2>Generar Factura en PDF</h2>
+        </div>
+        <form method="post" class="card-content" target="_blank"> <!-- target="_blank" abre el PDF en nueva pestaña -->
+            {% csrf_token %}
+            
+            <p class="mb-4 text-gray-700">
+                Seleccione un cliente para generar la factura. Esto procesará todos los consumos pendientes
+                para ese cliente hasta la fecha actual y los marcará como facturados.
+            </p>
 
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="nit">Cliente (por NIT)</label>
-                    <select name="nit" id="nit" class="form-control" required>
-                        <option value="">-- Seleccione un Cliente --</option>
-                        {% for cliente in clientes %}
-                            <option value="{{ cliente.nit }}">{{ cliente.nombre }} ({{ cliente.nit }})</option>
-                        {% empty %}
-                            <option value="" disabled>No se pudieron cargar clientes</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Campos de fecha -->
-                <div class="form-group">
-                    <label for="fecha_inicio">Fecha Inicio</label>
-                    <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="fecha_fin">Fecha Fin</label>
-                    <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" required>
-                </div>
-            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nit">Cliente (por NIT)</label>
+                    <select name="nit" id="nit" class="form-control" required>
+                        <option value="">-- Seleccione un Cliente --</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.nit }}">{{ cliente.nombre }} ({{ cliente.nit }})</option>
+                        {% empty %}
+                            <option value="" disabled>No se pudieron cargar clientes</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-            <button type="submit" class="btn mt-4">
-                <i class="fas fa-file-pdf mr-2"></i>Generar Factura en PDF
-            </button>
-        </form>
-    </div>
+                <!-- --- CAMPOS DE FECHA ELIMINADOS --- -->
+                
+            </div>
+
+            <button type="submit" class="btn mt-4">
+                <i class="fas fa-file-pdf mr-2"></i>Generar Factura en PDF
+            </button>
+        </form>
+    </div>
 {% endblock %}
 

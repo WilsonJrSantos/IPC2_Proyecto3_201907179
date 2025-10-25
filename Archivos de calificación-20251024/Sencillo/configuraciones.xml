@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archivoConfiguraciones>
+    <listaRecursos>
+        <recurso id="1">
+            <nombre>Memoria de acceso aleatorio</nombre>
+            <abreviatura>RAM</abreviatura>
+            <metrica>Gb</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>40</valorXhora>
+        </recurso>
+        <recurso id="2">
+            <nombre>Unidad central de procesamiento</nombre>
+            <abreviatura>CPU</abreviatura>
+            <metrica>Núcleos</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>55</valorXhora>
+        </recurso>
+        <recurso id="3">
+            <nombre>Disco duro sólido</nombre>
+            <abreviatura>SSD</abreviatura>
+            <metrica>Gb</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>25</valorXhora>
+        </recurso>
+        <recurso id="4">
+            <nombre>Teclado</nombre>
+            <abreviatura>TCL</abreviatura>
+            <metrica>Unidad</metrica>
+            <tipo>HARDWARE</tipo>
+            <valorXhora>60</valorXhora>
+        </recurso>
+        <recurso id="5">
+            <nombre>Recurso 5</nombre>
+            <abreviatura>R5</abreviatura>
+            <metrica>Licencia</metrica>
+            <tipo>SOFTWARE</tipo>
+            <valorXhora>82.5</valorXhora>
+        </recurso>
+    </listaRecursos>
+
+    <listaCategorias>
+        <categoria id="1">
+            <nombre>Categoria 1</nombre>
+            <descripcion>Configuraciones de alta carga</descripcion>
+            <cargaTrabajo>Alta</cargaTrabajo>
+            <listaConfiguraciones>
+                <configuracion id="1">
+                    <nombre>Cat1-Conf1</nombre>
+                    <descripcion>Configuración media</descripcion>
+                    <recursosConfiguracion>
+                        <recurso id="1">25</recurso>
+                        <recurso id="3">5</recurso>
+                    </recursosConfiguracion>
+                </configuracion>
+                <configuracion id="2">
+                    <nombre>Cat1-Conf2</nombre>
+                    <descripcion>Configuración baja</descripcion>
+                    <recursosConfiguracion>
+                        <recurso id="2">3</recurso>
+                        <recurso id="4">7</recurso>
+                    </recursosConfiguracion>
+                </configuracion>
+            </listaConfiguraciones>
+        </categoria>
+    </listaCategorias>
+
+    <listaClientes>
+        <cliente nit="2019160-K">
+            <nombre>Nombre</nombre>
+            <usuario>Usuario</usuario>
+            <clave>claveUsuario</clave>
+            <direccion>Direccion del cliente</direccion>
+            <correoElectronico>eMailCliente</correoElectronico>
+            <listaInstancias>
+                <instancia id="1">
+                    <idConfiguracion>1</idConfiguracion>
+                    <nombre>Primera instancia</nombre>
+                    <fechaInicio>esta es una descripcion de la fecha 26/02/2003</fechaInicio>
+                    <estado>VIGENTE</estado>
+                    <fechaFinal>27/06/2009</fechaFinal>
+                </instancia>
+                <instancia id="2">
+                    <idConfiguracion>2</idConfiguracion>
+                    <nombre>Segunda instancia</nombre>
+                    <fechaInicio>esta es una descripcion de la fecha 26/02/2003</fechaInicio>
+                    <estado>CANCELADA</estado>
+                    <fechaFinal>27/06/2009</fechaFinal>
+                </instancia>
+            </listaInstancias>
+        </cliente>
+    </listaClientes>
+</archivoConfiguraciones>  

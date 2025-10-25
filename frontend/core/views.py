@@ -1,298 +1,537 @@
-from django.shortcuts import render, redirect
+import json # Para pasar datos a JS
 import requests
-import json
-from django.http import HttpResponse
+from datetime import datetime # Para convertir fechas
+from django.shortcuts import render, redirect # Añadir redirect
+from django.http import HttpResponse, JsonResponse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from datetime import datetime
 
-API_URL = "http://127.0.0.1:5000"
+API_URL = "http://127.0.0.1:5000" # URL de nuestro backend Flask
 
-def format_date_to_xml(date_str_iso):
-    """Convierte yyyy-mm-dd (de input type=date) a dd/mm/yyyy (para el API/XML)"""
+def format_date_to_api(date_str_iso):
+    """Convierte YYYY-MM-DD a dd/mm/yyyy para enviar al API."""
     if not date_str_iso: return ""
     try:
         return datetime.strptime(date_str_iso, '%Y-%m-%d').strftime('%d/%m/%Y')
-    except ValueError: return date_str_iso
+    except ValueError:
+        return "" # Devuelve vacío si el formato es incorrecto
+
+def get_api_data():
+    """ Función auxiliar para obtener los datos del API. """
+    try:
+        response = requests.get(f"{API_URL}/consultar-datos", timeout=5) # Añadir timeout
+        response.raise_for_status() # Lanza excepción si hay error HTTP
+        # Asegurarnos que la respuesta es JSON antes de decodificar
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            return response.json()
+        else:
+            print(f"Respuesta inesperada del API (no es JSON): {response.text[:200]}")
+            return None
+    except requests.exceptions.Timeout:
+        print("Error: Timeout conectando al API.")
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error conectando al API: {e}")
+        return None # Devuelve None si falla la conexión o hay error
+    except json.JSONDecodeError as e:
+        print(f"Error decodificando JSON del API: {e}")
+        return None
+
+# --- Vistas Principales ---
 
 def home(request):
     """ Vista principal para cargar archivos y ver datos. """
     context = {}
-    message = None
-    
+    # Usar sessions para mostrar mensajes después de redireccionar
+    if 'message' in request.session:
+        context['message'] = request.session.pop('message')
+
+    api_data = get_api_data() # Obtener datos frescos en cada carga GET
+
     if request.method == 'POST':
+        message_text = ''
+        message_type = 'error' # Tipo por defecto
+
         try:
+            # Lógica para enviar archivos XML al backend
             if 'config_file' in request.FILES:
-                files = {'archivo': request.FILES['config_file']}
-                response = requests.post(f"{API_URL}/cargar-configuracion", files=files)
+                archivo = request.FILES['config_file']
+                if not archivo.name.lower().endswith('.xml'):
+                     raise ValueError("El archivo de configuración debe ser .xml")
+                files = {'archivo': archivo}
+                response = requests.post(f"{API_URL}/cargar-configuracion", files=files, timeout=10) # Timeout
                 response.raise_for_status()
-                message_text = response.json().get('message', 'Éxito')
-                message = (message_text, 'success')
+                message_text = response.json().get('message', 'Archivo de configuración enviado.')
+                message_type = response.json().get('status', 'success') # 'success', 'error', 'warning'
+
             elif 'consumo_file' in request.FILES:
-                files = {'archivo': request.FILES['consumo_file']}
-                response = requests.post(f"{API_URL}/cargar-consumo", files=files)
+                archivo = request.FILES['consumo_file']
+                if not archivo.name.lower().endswith('.xml'):
+                     raise ValueError("El archivo de consumo debe ser .xml")
+                files = {'archivo': archivo}
+                response = requests.post(f"{API_URL}/cargar-consumo", files=files, timeout=10) # Timeout
                 response.raise_for_status()
-                message_text = response.json().get('message', 'Éxito')
-                message = (message_text, 'success')
+                message_text = response.json().get('message', 'Archivo de consumo enviado.')
+                message_type = response.json().get('status', 'success')
+
+            # Guardar mensaje en sesión y redireccionar para evitar reenvío de form
+            request.session['message'] = (message_text, message_type)
+            return redirect('home') # Redirecciona a la misma vista (método GET)
+
+        except ValueError as ve: # Capturar error de validación de archivo local
+             message_text = str(ve)
+        except requests.exceptions.Timeout:
+            message_text = "Error: Timeout al enviar archivo al API."
+        except requests.exceptions.HTTPError as http_err:
+             # Errores específicos devueltos por el API (4xx, 5xx)
+             try:
+                 error_data = http_err.response.json()
+                 message_text = f"Error del API ({http_err.response.status_code}): {error_data.get('message', http_err.response.text)}"
+             except json.JSONDecodeError:
+                 message_text = f"Error HTTP {http_err.response.status_code} del API: {http_err.response.text}"
         except requests.exceptions.RequestException as e:
-            try:
-                error_data = e.response.json()
-                message_text = error_data.get('message', str(e))
-            except: message_text = f"Error de conexión: {e}"
-            message = (message_text, 'error')
-        
-        if message: request.session['message'] = message
-        return redirect('home')
+            # Captura errores de conexión o HTTP del API
+            message_text = f"Error de conexión o del API: {e}"
+        except Exception as e:
+             # Captura otros errores inesperados
+             message_text = f"Error inesperado procesando la petición: {e}"
 
-    if 'message' in request.session: context['message'] = request.session.pop('message')
+        context['message'] = (message_text, message_type) # Mostrar error si falla antes de redirect
 
-    try:
-        response = requests.get(f"{API_URL}/consultar-datos")
-        response.raise_for_status()
-        context['datos'] = response.json()
-    except requests.exceptions.RequestException as e:
-        context['datos_error'] = f"No se pudieron cargar los datos del API: {e}"
+
+    # Pasar datos del API (si se obtuvieron) al contexto para el GET
+    context['api_data'] = api_data
+    # Pasar los datos como JSON para la pestaña RAW
+    context['api_data_json'] = json.dumps(api_data, indent=2, ensure_ascii=False) if api_data else "{}"
 
     return render(request, 'core/home.html', context)
 
-def reset_data(request):
+def reset_data_view(request):
     """ Vista para llamar al endpoint de reset del backend. """
-    message = None
+    context = {'message': None}
     if request.method == 'POST':
+        message_text = ''
+        message_type = 'error'
         try:
-            response = requests.post(f"{API_URL}/reset")
+            response = requests.post(f"{API_URL}/reset", timeout=5)
             response.raise_for_status()
-            message_text = response.json().get('message', 'Sistema reseteado.')
-            message = (message_text, 'success')
+            message_text = response.json().get('message', 'Sistema reseteado exitosamente.')
+            message_type = 'success'
+        except requests.exceptions.Timeout:
+            message_text = "Error: Timeout conectando al API para resetear."
         except requests.exceptions.RequestException as e:
-            message_text = f"Error al resetear: {e}"
-            message = (message_text, 'error')
-    
-    return render(request, 'core/reset.html', {'message': message})
+            message_text = f"Error al conectar con el API para resetear: {e}"
+        except Exception as e:
+            message_text = f"Error inesperado: {e}"
 
-# --- INICIO VISTA MODIFICADA ---
+        context['message'] = (message_text, message_type)
+
+    return render(request, 'core/reset.html', context)
+
+
+# --- Vistas de Creación de Datos ---
+
 def creacion_datos_view(request):
-    """ Vista para manejar todos los formularios de creación de datos. """
-    context = {}
+    """ Vista para manejar los formularios de creación de nuevos datos. """
+    context = {'message': None, 'api_data': None, 'api_data_json': '{}'}
+    api_data = get_api_data() # Obtener datos para los dropdowns
 
-    def get_dropdown_data():
-        """Obtiene datos del API para poblar los <select>"""
-        try:
-            response = requests.get(f"{API_URL}/consultar-datos")
-            response.raise_for_status()
-            data = response.json()
-            context['full_data_json'] = json.dumps(data) 
-            context['clientes'] = data.get('clientes', [])
-            context['categorias'] = data.get('categorias', [])
-            
-            all_configs = []
-            for cat in data.get('categorias', []):
-                all_configs.extend(cat.get('configuraciones', []))
-            context['configuraciones'] = all_configs
-            
-            # --- NUEVO: Pasar recursos disponibles ---
-            context['recursos'] = data.get('recursos', [])
-            # --- FIN NUEVO ---
+    if api_data:
+        context['api_data'] = api_data
+        # Convertir datos a JSON para usar en JavaScript
+        context['api_data_json'] = json.dumps(api_data, ensure_ascii=False)
+        # Pasar listas directamente para los <select> del template
+        context['clientes'] = api_data.get('clientes', [])
+        context['categorias'] = api_data.get('categorias', [])
+        # Recolectar todas las configuraciones de todas las categorías
+        all_configs = []
+        for cat in api_data.get('categorias', []):
+           all_configs.extend(cat.get('configuraciones', []))
+        context['configuraciones'] = all_configs
+        context['recursos'] = api_data.get('recursos', [])
 
-        except requests.exceptions.RequestException as e:
-            context['message'] = (f"Error cargando datos para los selectores: {e}", 'error')
-            context['clientes'], context['categorias'], context['configuraciones'], context['recursos'] = [], [], [], []
-            context['full_data_json'] = "{}"
-
-    get_dropdown_data() # Cargar datos para los dropdowns
 
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
-        payload = {key: val for key, val in request.POST.items() if key not in ['csrfmiddlewaretoken', 'form_type'] and val and not key.startswith('recurso_id_') and not key.startswith('recurso_cantidad_')}
+        payload = {}
         endpoint = ''
-
-        if form_type == 'crear_cliente': endpoint = '/crear-cliente'
-        elif form_type == 'crear_recurso': endpoint = '/crear-recurso'
-        elif form_type == 'crear_categoria': endpoint = '/crear-categoria'
-        
-        # --- NUEVO: Lógica para recolectar recursos dinámicos ---
-        elif form_type == 'crear_configuracion':
-            endpoint = '/crear-configuracion'
-            recursos_list = []
-            # Busca campos que empiecen con 'recurso_id_'
-            recurso_keys = [key for key in request.POST if key.startswith('recurso_id_')]
-            for key in recurso_keys:
-                index = key.split('_')[-1] # Obtiene el índice (ej: '0', '1')
-                id_recurso = request.POST.get(f'recurso_id_{index}')
-                cantidad = request.POST.get(f'recurso_cantidad_{index}')
-                if id_recurso and cantidad:
-                    recursos_list.append({'id_recurso': id_recurso, 'cantidad': cantidad})
-            payload['recursos'] = recursos_list # Añade la lista al payload
-        # --- FIN NUEVO ---
-        
-        elif form_type == 'crear_instancia':
-            endpoint = '/crear-instancia'
-            payload['fecha_inicio'] = format_date_to_xml(payload.get('fecha_inicio'))
-        
-        elif form_type == 'cancelar_instancia':
-            endpoint = '/cancelar-instancia'
-            payload['fecha_final'] = format_date_to_xml(payload.get('fecha_final'))
-
-        if not endpoint:
-            context['message'] = ("Tipo de formulario desconocido.", 'error')
-            get_dropdown_data()
-            return render(request, 'core/creacion_datos.html', context)
+        message_text = ''
+        message_type = 'error'
 
         try:
-            response = requests.post(f"{API_URL}{endpoint}", json=payload)
-            response.raise_for_status()
-            message_text = response.json().get('message', 'Operación exitosa.')
-            context['message'] = (message_text, 'success')
-        except requests.exceptions.RequestException as e:
-            try:
-                error_data = e.response.json()
-                message_text = error_data.get('message', str(e))
-            except: message_text = f"Error en la operación: {e}"
-            context['message'] = (message_text, 'error')
+            # Determinar qué formulario se envió y construir el payload
+            if form_type == 'crear_cliente':
+                endpoint = '/crear-cliente'
+                payload = {
+                    'nit': request.POST.get('nit'),
+                    'nombre': request.POST.get('nombre'),
+                    'usuario': request.POST.get('usuario'),
+                    'clave': request.POST.get('clave'),
+                    'direccion': request.POST.get('direccion'),
+                    'correo': request.POST.get('correo'),
+                }
+            elif form_type == 'crear_recurso':
+                 endpoint = '/crear-recurso'
+                 payload = {
+                    'id': request.POST.get('rec_id'),
+                    'nombre': request.POST.get('rec_nombre'),
+                    'abreviatura': request.POST.get('rec_abreviatura'),
+                    'metrica': request.POST.get('rec_metrica'),
+                    'tipo': request.POST.get('rec_tipo'),
+                    'valor_x_hora': request.POST.get('rec_valor'),
+                 }
+            elif form_type == 'crear_categoria':
+                 endpoint = '/crear-categoria'
+                 payload = {
+                     'id': request.POST.get('cat_id'),
+                     'nombre': request.POST.get('cat_nombre'),
+                     'descripcion': request.POST.get('cat_descripcion'),
+                     'carga_trabajo': request.POST.get('cat_carga'),
+                 }
+            elif form_type == 'crear_configuracion':
+                endpoint = '/crear-configuracion'
+                recursos_list = []
+                # Recolectar recursos añadidos dinámicamente
+                rec_ids = request.POST.getlist('conf_rec_id[]')
+                rec_cants = request.POST.getlist('conf_rec_cant[]')
+                # print(f"Recursos recibidos: IDs={rec_ids}, Cants={rec_cants}") # Debug
+                for rec_id, rec_cant in zip(rec_ids, rec_cants):
+                     if rec_id and rec_cant: # Asegurar que ambos tengan valor
+                        recursos_list.append({'id_recurso': rec_id, 'cantidad': rec_cant})
 
-        get_dropdown_data() # Recargar datos para los dropdowns
-        return render(request, 'core/creacion_datos.html', context)
+                payload = {
+                    'id_categoria': request.POST.get('conf_cat_id'),
+                    'id': request.POST.get('conf_id'),
+                    'nombre': request.POST.get('conf_nombre'),
+                    'descripcion': request.POST.get('conf_descripcion'),
+                    'recursos': recursos_list
+                }
+                # print(f"Payload Crear Config: {payload}") # Debug
+            elif form_type == 'crear_instancia':
+                endpoint = '/crear-instancia'
+                # Convertir fecha YYYY-MM-DD a dd/mm/yyyy
+                fecha_inicio_api = format_date_to_api(request.POST.get('inst_fecha_inicio'))
+                if not fecha_inicio_api and request.POST.get('inst_fecha_inicio'): # Si había fecha pero el formato falló
+                     raise ValueError("Formato de fecha de inicio inválido. Use el calendario.")
+
+                payload = {
+                    'nit_cliente': request.POST.get('inst_nit_cliente'),
+                    'id_instancia': request.POST.get('inst_id'),
+                    'id_configuracion': request.POST.get('inst_conf_id'),
+                    'nombre': request.POST.get('inst_nombre'),
+                    'fecha_inicio': fecha_inicio_api,
+                }
+            elif form_type == 'cancelar_instancia':
+                endpoint = '/cancelar-instancia'
+                # Convertir fecha YYYY-MM-DD a dd/mm/yyyy
+                fecha_final_api = format_date_to_api(request.POST.get('cancel_fecha_final'))
+                if not fecha_final_api and request.POST.get('cancel_fecha_final'):
+                     raise ValueError("Formato de fecha final inválido. Use el calendario.")
+
+                payload = {
+                     'nit_cliente': request.POST.get('cancel_nit_cliente'),
+                     'id_instancia': request.POST.get('cancel_inst_id'),
+                     'fecha_final': fecha_final_api,
+                }
+
+            # Enviar petición al backend
+            if endpoint:
+                # print(f"Enviando a {endpoint} payload: {payload}") # Debug
+                response = requests.post(f"{API_URL}{endpoint}", json=payload, timeout=10) # Timeout
+                # print(f"Respuesta API: Status={response.status_code}, Body={response.text}") # Debug
+                response.raise_for_status() # Lanza excepción si hay error HTTP
+                message_text = response.json().get('message', 'Operación realizada.')
+                # Usar status del API si existe, sino 'success' por defecto
+                message_type = response.json().get('status', 'success')
+                # Recargar datos frescos del API después de la operación exitosa
+                api_data = get_api_data()
+                if api_data:
+                    context['api_data'] = api_data
+                    context['api_data_json'] = json.dumps(api_data, ensure_ascii=False)
+                    # Actualizar listas para dropdowns
+                    context['clientes'] = api_data.get('clientes', [])
+                    context['categorias'] = api_data.get('categorias', [])
+                    all_configs = []
+                    for cat in api_data.get('categorias', []):
+                       all_configs.extend(cat.get('configuraciones', []))
+                    context['configuraciones'] = all_configs
+                    context['recursos'] = api_data.get('recursos', [])
+
+            else:
+                message_text = "Tipo de formulario no reconocido."
+                message_type = 'error' # Asegurar que sea error si no se reconoce
+
+        except ValueError as ve: # Capturar errores de conversión de fecha/número locales
+             message_text = f"Error en los datos del formulario: {ve}"
+             message_type = 'error'
+        except requests.exceptions.Timeout:
+            message_text = f"Error: Timeout conectando al API ({endpoint})."
+            message_type = 'error'
+        except requests.exceptions.HTTPError as http_err:
+             # Errores específicos devueltos por el API (4xx, 5xx)
+             try:
+                 error_data = http_err.response.json()
+                 message_text = f"Error del API ({http_err.response.status_code}): {error_data.get('message', http_err.response.text)}"
+             except json.JSONDecodeError:
+                 message_text = f"Error HTTP {http_err.response.status_code} del API: {http_err.response.text}"
+             message_type = 'error'
+        except requests.exceptions.RequestException as req_err:
+             # Errores de conexión
+             message_text = f"Error de conexión con el API: {req_err}"
+             message_type = 'error'
+        except Exception as e:
+             # Otros errores inesperados
+             message_text = f"Error inesperado: {type(e).__name__} - {e}"
+             message_type = 'error'
+             import traceback
+             traceback.print_exc() # Imprimir traceback completo en consola Django
+
+        context['message'] = (message_text, message_type)
+
 
     return render(request, 'core/creacion_datos.html', context)
-# --- FIN VISTA MODIFICADA ---
 
+
+# --- Vistas de Facturación y Reportes ---
 
 def facturacion_view(request):
-    """ Vista para el proceso de facturación y generación de PDF. """
-    context = {}
-    try:
-        response = requests.get(f"{API_URL}/consultar-datos")
-        response.raise_for_status()
-        context['clientes'] = response.json().get('clientes', [])
-    except requests.exceptions.RequestException as e:
-        context['message'] = (f"Error cargando clientes: {e}", 'error')
-        context['clientes'] = []
+    """ Vista para el proceso de facturación y generación de PDF (simplificado). """
+    context = {'message': None}
+    api_data = get_api_data()
+    context['clientes'] = api_data.get('clientes', []) if api_data else []
 
     if request.method == 'POST':
         nit = request.POST.get('nit')
-        fecha_inicio_iso = request.POST.get('fecha_inicio')
-        fecha_fin_iso = request.POST.get('fecha_fin')
-        fecha_inicio = format_date_to_xml(fecha_inicio_iso)
-        fecha_fin = format_date_to_xml(fecha_fin_iso)
+        # --- CORRECCIÓN: Solo enviar el NIT ---
+        payload = {'nit': nit}
+        message_text = ''
+        message_type = 'error'
 
         try:
-            payload = {'nit': nit, 'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin}
-            response_factura = requests.post(f"{API_URL}/generar-factura", json=payload)
+            # 1. Generar la factura en el backend
+            response_factura = requests.post(f"{API_URL}/generar-factura", json=payload, timeout=10) # Timeout
             response_factura.raise_for_status()
-            factura_data = response_factura.json()
+            factura_data_full = response_factura.json() # Contiene 'status', 'message', 'factura'
 
-            if factura_data.get('status') == 'success':
-                # --- Generación PDF Detallada ---
+            if factura_data_full.get('status') == 'success' and 'factura' in factura_data_full:
+                factura_data = factura_data_full['factura'] # Extraer solo los datos de la factura
+
+                # 2. Generar el PDF
                 response_pdf = HttpResponse(content_type='application/pdf')
-                response_pdf['Content-Disposition'] = f'attachment; filename="factura_{nit}_{factura_data.get("id", "000")}.pdf"'
+                # Nombre de archivo más descriptivo
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                # Usar ID numérico si existe, sino timestamp
+                factura_id_str = str(factura_data.get('id', timestamp))
+                filename = f"factura_{factura_data.get('nit_cliente', 'NIT')}_{factura_id_str}.pdf"
+                response_pdf['Content-Disposition'] = f'attachment; filename="{filename}"'
+
                 p = canvas.Canvas(response_pdf, pagesize=letter)
-                width, height = letter
-                
+                width, height = letter # Ancho y alto de la página
+
+                # --- Estilos Mejorados para PDF ---
                 p.setFont("Helvetica-Bold", 16)
-                p.drawCentredString(width / 2.0, height - 50, "Factura - Tecnologías Chapinas, S.A.")
-                
-                p.setFont("Helvetica", 10)
-                p.drawString(inch, height - 90, f"Cliente NIT: {factura_data.get('nit_cliente')}")
-                p.drawString(inch, height - 105, f"Cliente Nombre: {factura_data.get('nombre_cliente', 'N/A')}")
-                p.drawRightString(width - inch, height - 90, f"No. Factura: {factura_data.get('id', 'N/A')}")
-                p.drawRightString(width - inch, height - 105, f"Fecha Emisión: {factura_data.get('fecha_factura', 'N/A')}")
-                
+                p.drawCentredString(width / 2.0, height - inch, "Factura - Tecnologías Chapinas, S.A.")
+
+                p.setFont("Helvetica", 11)
+                margin = inch
+                text_y = height - 1.5 * inch
+
+                # Datos del Cliente y Factura
+                p.drawString(margin, text_y, f"Factura No: {factura_data.get('id', 'N/A')}")
+                text_y -= 20
+                p.drawString(margin, text_y, f"Fecha de Emisión: {factura_data.get('fecha_factura', 'N/A')}")
+                text_y -= 20
+                p.drawString(margin, text_y, f"Cliente: {factura_data.get('nombre_cliente', 'N/A')}")
+                text_y -= 20
+                p.drawString(margin, text_y, f"NIT: {factura_data.get('nit_cliente', 'N/A')}")
+
+                text_y -= 40 # Espacio antes del detalle
+
+                # Encabezado Detalle
                 p.setFont("Helvetica-Bold", 12)
-                p.drawRightString(width - inch, height - 135, f"Monto Total: Q{factura_data.get('monto_total', 0.0):.2f}")
-                p.line(inch, height - 150, width - inch, height - 150)
-                
-                y = height - 175
-                p.setFont("Helvetica-Bold", 11)
-                p.drawString(inch, y, "Detalle de Consumos por Instancia")
-                y -= 25
-                p.setFont("Helvetica", 9)
-                
-                for inst_detalle in factura_data.get('detalles_instancias', []):
-                    if y < inch * 1.5: # Salto de página preventivo
-                        p.showPage(); y = height - 50; p.setFont("Helvetica", 9)
+                p.drawString(margin, text_y, "Detalle de Consumos por Instancia")
+                text_y -= 15
+                p.line(margin, text_y, width - margin, text_y) # Línea separadora
+                text_y -= 25
+
+                # Detalle por Instancia
+                p.setFont("Helvetica", 10)
+                for detalle_inst in factura_data.get('detalles_instancias', []):
+                    # Control de Salto de Página
+                    needed_height = 60 + len(detalle_inst.get('recursos_costo', [])) * 24 # Altura aprox.
+                    if text_y < margin + needed_height:
+                         p.showPage()
+                         p.setFont("Helvetica", 10)
+                         text_y = height - margin # Reiniciar Y en nueva página
 
                     p.setFont("Helvetica-Bold", 10)
-                    p.drawString(inch, y, f"Instancia: {inst_detalle.get('nombre_instancia')} (ID: {inst_detalle.get('id_instancia')})")
-                    p.drawRightString(width - inch, y, f"Subtotal Instancia: Q{inst_detalle.get('subtotal_instancia', 0.0):.2f}")
-                    y -= 15
-                    
+                    p.drawString(margin, text_y, f"Instancia: {detalle_inst.get('nombre_instancia', 'N/A')} (ID: {detalle_inst.get('id_instancia', 'N/A')})")
+                    text_y -= 15
                     p.setFont("Helvetica", 9)
-                    p.drawString(inch + 20, y, f"Total Horas Consumidas: {inst_detalle.get('horas_consumidas', 0.0):.2f}h")
-                    p.drawString(inch + 200, y, f"Configuración: {inst_detalle.get('nombre_configuracion')} (ID: {inst_detalle.get('id_configuracion')})")
-                    y -= 15
-                    
+                    p.drawString(margin + 15, text_y, f"Configuración: {detalle_inst.get('nombre_configuracion', 'N/A')} (ID: {detalle_inst.get('id_configuracion', 'N/A')})")
+                    text_y -= 15
+                    p.drawString(margin + 15, text_y, f"Horas Totales Consumidas: {detalle_inst.get('horas_consumidas', 0):.2f} hrs")
+                    text_y -= 15
+
+                    # Detalle de Recursos para esta Instancia
                     p.setFont("Helvetica-Oblique", 9)
-                    p.drawString(inch + 20, y, "Recursos Utilizados y Cálculo:")
-                    y -= 12
+                    p.drawString(margin + 30, text_y, "Recursos y Costo:")
+                    text_y -= 12
+                    p.setFont("Helvetica", 8) # Letra más pequeña para detalle recurso
+                    for det_rec in detalle_inst.get('recursos_costo', []):
+                         linea = (f"- {det_rec.get('nombre_recurso', 'N/A')}: "
+                                  f"{det_rec.get('cantidad', 0)} {det_rec.get('metrica', '')} x "
+                                  f"{detalle_inst.get('horas_consumidas', 0):.2f} hrs x "
+                                  f"Q{det_rec.get('valor_x_hora', 0):.2f}/hr = Q{det_rec.get('subtotal', 0):.2f}")
+                         p.drawString(margin + 45, text_y, linea)
+                         text_y -= 12
+                         if text_y < margin * 0.75: # Salto si ya no cabe (ajustado margen inferior)
+                              p.showPage()
+                              p.setFont("Helvetica", 8)
+                              text_y = height - margin * 0.75
 
-                    for rec_detalle in inst_detalle.get('recursos_costo', []):
-                        if y < inch: p.showPage(); y = height - 50; p.setFont("Helvetica", 9) # Salto si no cabe el recurso
-                        linea1 = f"- {rec_detalle.get('nombre_recurso')} (ID:{rec_detalle.get('id_recurso')})"
-                        linea2 = f"  ({rec_detalle.get('cantidad')} {rec_detalle.get('metrica')} x Q{rec_detalle.get('valor_x_hora'):.2f}/h x {inst_detalle.get('horas_consumidas', 0.0):.2f}h)"
-                        p.drawString(inch + 35, y, linea1)
-                        p.drawRightString(width - inch, y, f"= Q{rec_detalle.get('subtotal', 0.0):.2f}")
-                        y -= 12
-                        p.drawString(inch + 35, y, linea2)
-                        y -= 12
-                    
-                    y -= 10 # Espacio entre instancias
+                    p.setFont("Helvetica-Bold", 10)
+                    p.drawString(margin + 15, text_y, f"Subtotal Instancia: Q{detalle_inst.get('subtotal_instancia', 0):.2f}")
+                    text_y -= 25 # Espacio entre instancias
 
-                p.showPage(); p.save()
+                # Línea antes del total (solo si hubo detalles)
+                detalles_instancias_list = factura_data.get('detalles_instancias', []) # Re-obtener la lista
+                if detalles_instancias_list: # Comprobar si la lista no está vacía
+                    if text_y < margin * 1.5: # Salto si no cabe el total
+                        p.showPage(); text_y = height - margin * 1.5
+                    text_y -= 10
+                    p.line(margin, text_y, width - margin, text_y)
+                    text_y -= 25
+
+                # Total General
+                p.setFont("Helvetica-Bold", 14)
+                total_str = f"MONTO TOTAL: Q{factura_data.get('monto_total', 0):,.2f}" # Con separador de miles
+                p.drawRightString(width - margin, text_y, total_str)
+
+                # Guardar PDF
+                p.showPage()
+                p.save()
                 return response_pdf
-                # --- Fin Generación PDF ---
-            else:
-                context['message'] = (factura_data.get('message', 'Error'), 'error' if factura_data.get('status') == 'error' else 'success')
 
-        except requests.exceptions.RequestException as e:
-            try: error_data = e.response.json(); message_text = error_data.get('message', str(e))
-            except: message_text = f"Error al generar factura: {e}"
-            context['message'] = (message_text, 'error')
+            elif factura_data_full.get('status') == 'info':
+                # Caso donde no hay consumos pendientes
+                message_text = factura_data_full.get('message', 'No hay consumos para facturar.')
+                message_type = 'info'
+            else:
+                 # Otro tipo de respuesta del API que no es 'success' con factura
+                 message_text = factura_data_full.get('message', 'Respuesta inesperada del API.')
+                 message_type = factura_data_full.get('status', 'warning') # Usar status si existe
+
+        except requests.exceptions.Timeout:
+            message_text = "Error: Timeout al generar factura en el API."
+            message_type = 'error'
+        except requests.exceptions.HTTPError as http_err:
+            try:
+                error_data = http_err.response.json()
+                message_text = f"Error del API ({http_err.response.status_code}): {error_data.get('message', http_err.response.text)}"
+            except json.JSONDecodeError:
+                message_text = f"Error HTTP {http_err.response.status_code} del API: {http_err.response.text}"
+            message_type = 'error'
+        except requests.exceptions.RequestException as req_err:
+            message_text = f"Error de conexión con el API: {req_err}"
+            message_type = 'error'
+        except Exception as e:
+            message_text = f"Error inesperado al generar PDF: {type(e).__name__} - {e}"
+            message_type = 'error'
+            import traceback
+            traceback.print_exc() # Imprimir traceback completo en consola Django
+
+
+        context['message'] = (message_text, message_type)
+
 
     return render(request, 'core/facturacion.html', context)
 
+
 def reportes_view(request):
-    """ Vista para generar reportes de ventas. """
-    context = {}
-    if request.method == 'POST':
+    """ Vista para generar y mostrar reportes de ventas. """
+    context = {'message': None, 'reporte_data': None, 'reporte_titulo': '', 'form_data': {}, 'total_general': 0.0}
+    endpoint_map = {
+        'recursos': '/reporte/ventas-recurso',
+        'categorias': '/reporte/ventas-categoria',
+    }
+
+    if request.method == 'POST': # Cambiado a POST para recibir datos del form
         report_type = request.POST.get('report_type')
-        fecha_inicio_iso = request.POST.get('fecha_inicio')
-        fecha_fin_iso = request.POST.get('fecha_fin')
-        fecha_inicio = format_date_to_xml(fecha_inicio_iso)
-        fecha_fin = format_date_to_xml(fecha_fin_iso)
+        fecha_inicio_iso = request.POST.get('fecha_inicio') # YYYY-MM-DD
+        fecha_fin_iso = request.POST.get('fecha_fin')       # YYYY-MM-DD
 
-        context['form_data'] = {'report_type': report_type, 'fecha_inicio': fecha_inicio_iso, 'fecha_fin': fecha_fin_iso}
+        context['form_data'] = {'report_type': report_type, 'fecha_inicio': fecha_inicio_iso, 'fecha_fin': fecha_fin_iso} # Guardar para rellenar form
 
-        endpoint, titulo = ('', '')
-        if report_type == 'recursos':
-            endpoint, titulo = ('/reporte/ventas-recurso', "Ingresos por Recurso")
-        elif report_type == 'categorias':
-            endpoint, titulo = ('/reporte/ventas-categoria', "Ingresos por Categoría/Configuración")
-        context['reporte_titulo'] = titulo
-        
-        if endpoint:
+        endpoint = endpoint_map.get(report_type)
+        message_text = ''
+        message_type = 'error'
+
+        if not endpoint:
+            message_text = "Tipo de reporte no válido."
+        elif not fecha_inicio_iso or not fecha_fin_iso:
+             message_text = "Debe seleccionar fecha de inicio y fin."
+        else:
             try:
-                payload = {'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin}
-                response = requests.post(f"{API_URL}{endpoint}", json=payload)
+                # Enviar fechas como parámetros GET al API
+                params = {'fecha_inicio': fecha_inicio_iso, 'fecha_fin': fecha_fin_iso}
+                response = requests.get(f"{API_URL}{endpoint}", params=params, timeout=10) # Usar GET y Timeout
                 response.raise_for_status()
-                reporte_data_raw = response.json().get('reporte', {})
-                sorted_data = sorted(reporte_data_raw.items(), key=lambda item: item[1], reverse=True)
-                total_general = sum(reporte_data_raw.values())
-                context['reporte_data'] = sorted_data
-                context['total_general'] = total_general
-            except requests.exceptions.RequestException as e:
-                try: error_data = e.response.json(); message_text = error_data.get('message', str(e))
-                except: message_text = f"Error al generar reporte: {e}"
-                context['message'] = (message_text, 'error')
+                report_json = response.json()
 
+                if report_json.get('status') == 'success':
+                    # --- CORRECCIÓN: Usar 'data' en lugar de 'reporte' ---
+                    reporte_data_dict = report_json.get('data', {})
+                    # ---------------------------------------------------
+                    # Ordenar los datos por valor descendente para mostrarlos
+                    # Convertir a lista de tuplas (nombre, valor) para ordenar y pasar al template
+                    context['reporte_data'] = sorted(reporte_data_dict.items(), key=lambda item: item[1], reverse=True)
+
+                    # Crear título más descriptivo
+                    tipo_titulo = report_json.get('tipo_reporte', 'Desconocido')
+                    context['reporte_titulo'] = f"Ingresos por {tipo_titulo} ({report_json.get('fecha_inicio', '?')} - {report_json.get('fecha_fin', '?')})"
+
+                    # Calcular total general
+                    total_general = sum(reporte_data_dict.values())
+                    context['total_general'] = round(total_general, 2)
+
+                    message_text = "Reporte generado exitosamente."
+                    message_type = 'success'
+                else:
+                    message_text = report_json.get('message', 'Error desconocido del API al generar reporte.')
+                    message_type = report_json.get('status', 'error')
+
+            except requests.exceptions.Timeout:
+                message_text = f"Error: Timeout conectando al API ({endpoint})."
+                message_type = 'error'
+            except requests.exceptions.HTTPError as http_err:
+                try:
+                    error_data = http_err.response.json()
+                    message_text = f"Error del API ({http_err.response.status_code}): {error_data.get('message', http_err.response.text)}"
+                except json.JSONDecodeError:
+                    message_text = f"Error HTTP {http_err.response.status_code} del API: {http_err.response.text}"
+                message_type = 'error'
+            except requests.exceptions.RequestException as req_err:
+                 message_text = f"Error de conexión con el API: {req_err}"
+                 message_type = 'error'
+            except Exception as e:
+                 message_text = f"Error inesperado: {type(e).__name__} - {e}"
+                 message_type = 'error'
+                 import traceback
+                 traceback.print_exc()
+
+        context['message'] = (message_text, message_type)
+
+    # Si es GET, solo renderiza el formulario vacío
     return render(request, 'core/reportes.html', context)
+
 
 def ayuda_view(request):
     """ Vista para la página de Ayuda. """
-    # Puedes cambiar estos datos directamente o leerlos de un archivo/configuración
     context = {
-        'student_name': 'Wilson Javier Antonio Juarez', # Reemplaza
-        'student_id': '201907179' # Reemplaza
+        'student_name': "Tu Nombre Completo Aquí", # Reemplaza con tus datos
+        'student_id': "Tu Carnet Aquí"           # Reemplaza con tus datos
     }
     return render(request, 'core/ayuda.html', context)
 

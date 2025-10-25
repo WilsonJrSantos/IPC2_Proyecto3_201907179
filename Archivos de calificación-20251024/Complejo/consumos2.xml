@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listadoConsumos>
+    <!-- Cliente 2019160-K, Primera instancia -->
+    <consumo nitCliente="2019160-K" idInstancia="1">
+        <tiempo>12.5</tiempo>
+        <fechaHora>15/01/2023 10:00</fechaHora>
+    </consumo>
+    <consumo nitCliente="2019160-K" idInstancia="1">
+        <tiempo>7.75</tiempo>
+        <fechaHora>20/01/2023 16:30</fechaHora>
+    </consumo>
+
+    <!-- Cliente 2020001-9, Servidor Render María -->
+    <consumo nitCliente="2020001-9" idInstancia="3">
+        <tiempo>5.0</tiempo>
+        <fechaHora>01/04/2023 08:00</fechaHora>
+    </consumo>
+    <consumo nitCliente="2020001-9" idInstancia="3">
+        <tiempo>6.25</tiempo>
+        <fechaHora>05/04/2023 12:45</fechaHora>
+    </consumo>
+
+    <!-- Cliente 2020001-9, Diseño Gráfico Profesional -->
+    <consumo nitCliente="2020001-9" idInstancia="4">
+        <tiempo>3.5</tiempo>
+        <fechaHora>10/06/2023 14:15</fechaHora>
+    </consumo>
+    <consumo nitCliente="2020001-9" idInstancia="4">
+        <tiempo>4.0</tiempo>
+        <fechaHora>12/06/2023 09:30</fechaHora>
+    </consumo>
+
+    <!-- Cliente 2021055-3, Servidor SQL Empresarial -->
+    <consumo nitCliente="2021055-3" idInstancia="5">
+        <tiempo>10.0</tiempo>
+        <fechaHora>15/02/2023 11:00</fechaHora>
+    </consumo>
+    <consumo nitCliente="2021055-3" idInstancia="5">
+        <tiempo>8.25</tiempo>
+        <fechaHora>18/02/2023 17:45</fechaHora>
+    </consumo>
+
+    <!-- Cliente 2021055-3, Aplicaciones Web Corporativas -->
+    <consumo nitCliente="2021055-3" idInstancia="6">
+        <tiempo>9.5</tiempo>
+        <fechaHora>20/03/2023 13:00</fechaHora>
+    </consumo>
+    <consumo nitCliente="2021055-3" idInstancia="6">
+        <tiempo>7.0</tiempo>
+        <fechaHora>22/03/2023 15:30</fechaHora>
+    </consumo>
+</listadoConsumos>
